@@ -29,7 +29,7 @@ Usage
         },
         "aggs": {
                 "bytes_over_time": {
-                        "time_slice": {
+                        "proportional_sum": {
                                 "fields": ["netflow.first_switched", "netflow.last_switched", "netflow.bytes"],
                                 "interval": "60m",
                                 "start": 1515369600000,

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.opennms.elasticsearch.search.aggregations.buckets.timeslice;
+package org.elasticsearch.search.aggregations.bucket.histogram;
 
 import static org.elasticsearch.search.aggregations.bucket.histogram.Histogram.INTERVAL_FIELD;
 
@@ -22,23 +22,25 @@ import java.util.Map;
 
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.search.MultiValueMode;
-import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
-import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.support.MultiValuesSourceParser;
 import org.elasticsearch.search.aggregations.support.ValueType;
 import org.elasticsearch.search.aggregations.support.ValuesSourceType;
 
 /**
- * see {@link org.elasticsearch.search.aggregations.matrix.stats.MatrixStatsParser}
+ * Copy of {@link org.elasticsearch.search.aggregations.matrix.stats.MatrixStatsParser} extended
+ * to support the fields used is in the ProportionalSumAggregationBuilder.
+ *
+ * Ideally we would use a {@link org.elasticsearch.common.xcontent.ObjectParser} instead of this class, similar
+ * to what is already implemented in the {@link org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder},
+ * but the MultiValuesSource classes don't support this yet.
+ *
  */
-public class TimeSliceParser extends MultiValuesSourceParser.NumericValuesSourceParser {
+public class ProportionalSumParser extends MultiValuesSourceParser.NumericValuesSourceParser {
 
-    public static final ParseField MULTIVALUE_MODE_FIELD = new ParseField("mode");
-    public static final ParseField START_FIELD = new ParseField("start");
-    public static final ParseField END_FIELD = new ParseField("end");
+    protected static ParseField START_FIELD = new ParseField("start");
+    protected static ParseField END_FIELD = new ParseField("end");
 
-    public TimeSliceParser() {
+    public ProportionalSumParser() {
         super(true);
     }
 
@@ -53,15 +55,27 @@ public class TimeSliceParser extends MultiValuesSourceParser.NumericValuesSource
                 return true;
             }
         } else if (Histogram.OFFSET_FIELD.match(currentFieldName)) {
-
+            if (token == XContentParser.Token.VALUE_NUMBER) {
+                otherOptions.put(Histogram.OFFSET_FIELD, parser.longValue());
+                return true;
+            } else {
+                otherOptions.put(Histogram.OFFSET_FIELD, DateHistogramAggregationBuilder.parseStringOffset(parser.text()));
+                return true;
+            }
         } else if (Histogram.KEYED_FIELD.match(currentFieldName)) {
-
+            if (token == XContentParser.Token.VALUE_BOOLEAN) {
+                otherOptions.put(Histogram.KEYED_FIELD, parser.booleanValue());
+                return true;
+            }
         } else if (Histogram.MIN_DOC_COUNT_FIELD.match(currentFieldName)) {
-
+            if (token == XContentParser.Token.VALUE_NUMBER) {
+                otherOptions.put(Histogram.MIN_DOC_COUNT_FIELD, parser.longValue());
+                return true;
+            }
         } else if (Histogram.EXTENDED_BOUNDS_FIELD.match(currentFieldName)) {
-
+            // FIXME: We can't reuse ExtendedBounds.PARSER here, so we just ignore it
         } else if (Histogram.ORDER_FIELD.match(currentFieldName)) {
-
+            // FIXME: We can't resuse InternalOrder.Parser.parseOrderParam here, so we just ignore it
         } else if (START_FIELD.match(currentFieldName)) {
             if (token == XContentParser.Token.VALUE_NUMBER) {
                 otherOptions.put(START_FIELD, parser.longValue());
@@ -77,8 +91,8 @@ public class TimeSliceParser extends MultiValuesSourceParser.NumericValuesSource
     }
 
     @Override
-    protected TimeSliceAggregationBuilder createFactory(String aggregationName, ValuesSourceType valuesSourceType, ValueType targetValueType, Map<ParseField, Object> otherOptions) {
-        final TimeSliceAggregationBuilder builder = new TimeSliceAggregationBuilder(aggregationName);
+    protected ProportionalSumAggregationBuilder createFactory(String aggregationName, ValuesSourceType valuesSourceType, ValueType targetValueType, Map<ParseField, Object> otherOptions) {
+        final ProportionalSumAggregationBuilder builder = new ProportionalSumAggregationBuilder(aggregationName);
         Object interval = otherOptions.get(INTERVAL_FIELD);
         if (interval != null) {
             if (interval instanceof Long) {
@@ -86,6 +100,18 @@ public class TimeSliceParser extends MultiValuesSourceParser.NumericValuesSource
             } else {
                 builder.dateHistogramInterval((DateHistogramInterval) interval);
             }
+        }
+        Object offset = otherOptions.get(Histogram.OFFSET_FIELD);
+        if (offset != null) {
+            builder.offset((long) offset);
+        }
+        Object keyed = otherOptions.get(Histogram.KEYED_FIELD);
+        if (keyed != null) {
+            builder.keyed((boolean) keyed);
+        }
+        Object minDocCount = otherOptions.get(Histogram.MIN_DOC_COUNT_FIELD);
+        if (minDocCount != null) {
+            builder.minDocCount((long) minDocCount);
         }
         Object start = otherOptions.get(START_FIELD);
         if (start != null) {

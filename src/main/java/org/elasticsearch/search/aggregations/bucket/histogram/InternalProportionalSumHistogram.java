@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.opennms.elasticsearch.search.aggregations.buckets.timeslice;
+package org.elasticsearch.search.aggregations.bucket.histogram;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,9 +50,10 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 /**
- * Implementation of {@link Histogram}.
+ * Copy of {@link org.elasticsearch.search.aggregations.bucket.histogram.InternalDateHistogram} with the addition
+ * of each bucket having a (double) value.
  */
-public final class InternalTimeSliceHistogram extends InternalMultiBucketAggregation<InternalTimeSliceHistogram, InternalTimeSliceHistogram.Bucket>
+public final class InternalProportionalSumHistogram extends InternalMultiBucketAggregation<InternalProportionalSumHistogram, InternalProportionalSumHistogram.Bucket>
         implements Histogram, HistogramFactory {
 
     public static class Bucket extends InternalMultiBucketAggregation.InternalBucket implements Histogram.Bucket, KeyComparable<Bucket>, HistogramBucketWithValue {
@@ -65,7 +66,7 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
         protected final transient DocValueFormat format;
 
         public Bucket(long key, long docCount, double value, boolean keyed, DocValueFormat format,
-                InternalAggregations aggregations) {
+                      InternalAggregations aggregations) {
             this.format = format;
             this.value = value;
             this.keyed = keyed;
@@ -88,12 +89,12 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null || obj.getClass() != InternalTimeSliceHistogram.Bucket.class) {
+            if (obj == null || obj.getClass() != InternalProportionalSumHistogram.Bucket.class) {
                 return false;
             }
-            InternalTimeSliceHistogram.Bucket that = (InternalTimeSliceHistogram.Bucket) obj;
+            InternalProportionalSumHistogram.Bucket that = (InternalProportionalSumHistogram.Bucket) obj;
             // No need to take the keyed and format parameters into account,
-            // they are already stored and tested on the InternalTimeSliceHistogram object
+            // they are already stored and tested on the InternalProportionalSumHistogram object
             return key == that.key
                     && docCount == that.docCount
                     && value == that.value
@@ -145,7 +146,7 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
                 aggregations.add((InternalAggregations) bucket.getAggregations());
             }
             InternalAggregations aggs = InternalAggregations.reduce(aggregations, context);
-            return new InternalTimeSliceHistogram.Bucket(key, docCount, value, keyed, format, aggs);
+            return new InternalProportionalSumHistogram.Bucket(key, docCount, value, keyed, format, aggs);
         }
 
         @Override
@@ -239,7 +240,7 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
     private final long offset;
     private final EmptyBucketInfo emptyBucketInfo;
 
-    InternalTimeSliceHistogram(String name, List<Bucket> buckets, BucketOrder order, long minDocCount, long offset,
+    InternalProportionalSumHistogram(String name, List<Bucket> buckets, BucketOrder order, long minDocCount, long offset,
                                EmptyBucketInfo emptyBucketInfo,
                                DocValueFormat formatter, boolean keyed, List<PipelineAggregator> pipelineAggregators,
                                Map<String, Object> metaData) {
@@ -257,7 +258,7 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
     /**
      * Stream from a stream.
      */
-    public InternalTimeSliceHistogram(StreamInput in) throws IOException {
+    public InternalProportionalSumHistogram(StreamInput in) throws IOException {
         super(in);
         order = InternalOrder.Streams.readHistogramOrder(in, false);
         minDocCount = in.readVLong();
@@ -287,11 +288,11 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
 
     @Override
     public String getWriteableName() {
-        return TimeSliceAggregationBuilder.NAME;
+        return ProportionalSumAggregationBuilder.NAME;
     }
 
     @Override
-    public List<InternalTimeSliceHistogram.Bucket> getBuckets() {
+    public List<InternalProportionalSumHistogram.Bucket> getBuckets() {
         return Collections.unmodifiableList(buckets);
     }
 
@@ -312,8 +313,8 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
     }
 
     @Override
-    public InternalTimeSliceHistogram create(List<Bucket> buckets) {
-        return new InternalTimeSliceHistogram(name, buckets, order, minDocCount, offset, emptyBucketInfo, format,
+    public InternalProportionalSumHistogram create(List<Bucket> buckets) {
+        return new InternalProportionalSumHistogram(name, buckets, order, minDocCount, offset, emptyBucketInfo, format,
                 keyed, pipelineAggregators(), metaData);
     }
 
@@ -343,7 +344,7 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
             }
         };
         for (InternalAggregation aggregation : aggregations) {
-            InternalTimeSliceHistogram histogram = (InternalTimeSliceHistogram) aggregation;
+            InternalProportionalSumHistogram histogram = (InternalProportionalSumHistogram) aggregation;
             if (!histogram.buckets.isEmpty()) {
                 pq.add(new IteratorAndCurrent(histogram.buckets.iterator()));
             }
@@ -406,7 +407,7 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
                     long key = bounds.getMin() + offset;
                     long max = bounds.getMax() + offset;
                     while (key <= max) {
-                        iter.add(new InternalTimeSliceHistogram.Bucket(key, 0, 0.0d, keyed, format, reducedEmptySubAggs));
+                        iter.add(new InternalProportionalSumHistogram.Bucket(key, 0, 0.0d, keyed, format, reducedEmptySubAggs));
                         key = nextKey(key).longValue();
                     }
                 }
@@ -415,7 +416,7 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
                     long key = bounds.getMin() + offset;
                     if (key < firstBucket.key) {
                         while (key < firstBucket.key) {
-                            iter.add(new InternalTimeSliceHistogram.Bucket(key, 0, 0.0d, keyed, format, reducedEmptySubAggs));
+                            iter.add(new InternalProportionalSumHistogram.Bucket(key, 0, 0.0d, keyed, format, reducedEmptySubAggs));
                             key = nextKey(key).longValue();
                         }
                     }
@@ -430,7 +431,7 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
             if (lastBucket != null) {
                 long key = nextKey(lastBucket.key).longValue();
                 while (key < nextBucket.key) {
-                    iter.add(new InternalTimeSliceHistogram.Bucket(key, 0, 0.0d, keyed, format, reducedEmptySubAggs));
+                    iter.add(new InternalProportionalSumHistogram.Bucket(key, 0, 0.0d, keyed, format, reducedEmptySubAggs));
                     key = nextKey(key).longValue();
                 }
                 assert key == nextBucket.key;
@@ -443,7 +444,7 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
             long key = nextKey(lastBucket.key).longValue();
             long max = bounds.getMax() + offset;
             while (key <= max) {
-                iter.add(new InternalTimeSliceHistogram.Bucket(key, 0, 0.0d, keyed, format, reducedEmptySubAggs));
+                iter.add(new InternalProportionalSumHistogram.Bucket(key, 0, 0.0d, keyed, format, reducedEmptySubAggs));
                 key = nextKey(key).longValue();
             }
         }
@@ -472,7 +473,7 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
             CollectionUtil.introSort(reducedBuckets, order.comparator(null));
         }
 
-        return new InternalTimeSliceHistogram(getName(), reducedBuckets, order, minDocCount, offset, emptyBucketInfo,
+        return new InternalProportionalSumHistogram(getName(), reducedBuckets, order, minDocCount, offset, emptyBucketInfo,
                 format, keyed, pipelineAggregators(), getMetaData());
     }
 
@@ -514,7 +515,7 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
             buckets2.add((Bucket) b);
         }
         buckets2 = Collections.unmodifiableList(buckets2);
-        return new InternalTimeSliceHistogram(name, buckets2, order, minDocCount, offset, emptyBucketInfo, format,
+        return new InternalProportionalSumHistogram(name, buckets2, order, minDocCount, offset, emptyBucketInfo, format,
                 keyed, pipelineAggregators(), getMetaData());
     }
 
@@ -525,7 +526,7 @@ public final class InternalTimeSliceHistogram extends InternalMultiBucketAggrega
 
     @Override
     protected boolean doEquals(Object obj) {
-        InternalTimeSliceHistogram that = (InternalTimeSliceHistogram) obj;
+        InternalProportionalSumHistogram that = (InternalProportionalSumHistogram) obj;
         return Objects.equals(buckets, that.buckets)
                 && Objects.equals(order, that.order)
                 && Objects.equals(format, that.format)

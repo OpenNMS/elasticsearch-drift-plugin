@@ -13,9 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.opennms.elasticsearch.search.aggregations.buckets.timeslice;
+package org.elasticsearch.search.aggregations.bucket.histogram;
 
-public interface HistogramBucketWithValue extends  org.elasticsearch.search.aggregations.bucket.histogram.Histogram.Bucket {
+/**
+ * A histogram bucket that has some value.
+ *
+ * @author jwhite
+ */
+public interface HistogramBucketWithValue extends Histogram.Bucket {
 
     double getValue();
 

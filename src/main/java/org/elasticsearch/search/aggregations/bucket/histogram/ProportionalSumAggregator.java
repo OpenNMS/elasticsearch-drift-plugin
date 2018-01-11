@@ -1,23 +1,35 @@
-/*
- * Copyright 2018, The OpenNMS Group
+/*******************************************************************************
+ * This file is part of OpenNMS(R).
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may
- * not use this file except in compliance with the License. You may obtain
- * a copy of the License at
+ * Copyright (C) 2018 The OpenNMS Group, Inc.
+ * OpenNMS(R) is Copyright (C) 1999-2018 The OpenNMS Group, Inc.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * OpenNMS(R) is a registered trademark of The OpenNMS Group, Inc.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.opennms.elasticsearch.search.aggregations.buckets.timeslice;
+ * OpenNMS(R) is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * OpenNMS(R) is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with OpenNMS(R).  If not, see:
+ *      http://www.gnu.org/licenses/
+ *
+ * For more information contact:
+ *     OpenNMS(R) Licensing <license@opennms.org>
+ *     http://www.opennms.org/
+ *     http://www.opennms.com/
+ *******************************************************************************/
+
+package org.elasticsearch.search.aggregations.bucket.histogram;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,18 +53,22 @@ import org.elasticsearch.search.aggregations.InternalOrder;
 import org.elasticsearch.search.aggregations.LeafBucketCollector;
 import org.elasticsearch.search.aggregations.LeafBucketCollectorBase;
 import org.elasticsearch.search.aggregations.bucket.BucketsAggregator;
-import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
 import org.elasticsearch.search.aggregations.pipeline.PipelineAggregator;
 import org.elasticsearch.search.aggregations.support.MultiValuesSource;
 import org.elasticsearch.search.aggregations.support.ValuesSource;
-import org.elasticsearch.search.aggregations.support.ValuesSourceConfig;
 import org.elasticsearch.search.internal.SearchContext;
 
-public class TimeSliceAggregator extends BucketsAggregator {
+/**
+ * This bucket aggregator determines allows documents to be added into many
+ * buckets based on their date range and keeps track of the sum of a given value
+ * relative the how long the documents spend in that bucket.
+ *
+ * @author jwhite
+ */
+public class ProportionalSumAggregator extends BucketsAggregator {
 
     /** Multiple ValuesSource with field names */
     private final MultiValuesSource.NumericMultiValuesSource valuesSources;
-    private final Map<String, ValuesSourceConfig<ValuesSource.Numeric>> configs;
     private final DocValueFormat formatter;
     private final Rounding rounding;
     private final BucketOrder order;
@@ -62,29 +78,28 @@ public class TimeSliceAggregator extends BucketsAggregator {
     private final ExtendedBounds extendedBounds;
 
     private final LongHash bucketOrds;
-    private final long step;
     private final long offset;
     private DoubleArray sums;
 
-    private final long start;
-    private final long end;
+    private final Long start;
+    private final Long end;
 
-
-    TimeSliceAggregator(String name, AggregatorFactories factories, Rounding rounding, long offset, BucketOrder order,
+    ProportionalSumAggregator(String name, AggregatorFactories factories, Rounding rounding, long offset, BucketOrder order,
                         boolean keyed,
                         long minDocCount, @Nullable ExtendedBounds extendedBounds, @Nullable Map<String, ValuesSource.Numeric> valuesSources,
-                        Map<String, ValuesSourceConfig<ValuesSource.Numeric>> configs, SearchContext aggregationContext,
-                        Aggregator parent, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData,
-                        long start, long end) throws IOException {
+                        DocValueFormat formatter, SearchContext aggregationContext, Aggregator parent, List<PipelineAggregator> pipelineAggregators,
+                        Map<String, Object> metaData, Long start, Long end) throws IOException {
 
         super(name, factories, aggregationContext, parent, pipelineAggregators, metaData);
         this.rounding = rounding;
         this.offset = offset;
-        this.order = InternalOrder.validate(order, this);;
+        this.order = InternalOrder.validate(order, this);
         this.keyed = keyed;
         this.minDocCount = minDocCount;
         this.extendedBounds = extendedBounds;
-        this.configs = configs;
+        this.formatter = formatter;
+        this.start = start != null ? start : Long.MIN_VALUE;
+        this.end = end != null ? end : Long.MAX_VALUE;
 
         if (valuesSources != null && !valuesSources.isEmpty()) {
             this.valuesSources = new MultiValuesSource.NumericMultiValuesSource(valuesSources, MultiValueMode.MIN);
@@ -92,20 +107,8 @@ public class TimeSliceAggregator extends BucketsAggregator {
             this.valuesSources = null;
         }
 
-        // FIXME: Hack
-        this.formatter = configs.values().iterator().next().format();
-
-        // derive the step from the rounding
-        step = rounding.nextRoundingValue(rounding.round(0)) - rounding.round(0);
-
         bucketOrds = new LongHash(1, aggregationContext.bigArrays());
-
-        if (valuesSources != null) {
-            sums = context.bigArrays().newDoubleArray(1, true);
-        }
-
-        this.start = start;
-        this.end = end;
+        sums = context.bigArrays().newDoubleArray(1, true);
     }
 
     @Override
@@ -135,20 +138,24 @@ public class TimeSliceAggregator extends BucketsAggregator {
                     throw new IllegalStateException("Invalid number of fields specified. Need 3, got " + fieldVals.length);
                 }
 
+                // start of the range
                 long rangeStartVal = 0;
                 final NumericDoubleValues rangeStartDoubleValues = values[0];
                 if (rangeStartDoubleValues.advanceExact(doc)) {
-                    rangeStartVal = new Double(rangeStartDoubleValues.doubleValue()).longValue();
+                    rangeStartVal = ((Double)rangeStartDoubleValues.doubleValue()).longValue();
                 }
 
+                // end of the range
                 long rangeEndVal = 0;
                 final NumericDoubleValues rangeEndDoubleValues = values[1];
                 if (rangeEndDoubleValues.advanceExact(doc)) {
-                    rangeEndVal = new Double(rangeEndDoubleValues.doubleValue()).longValue();
+                    rangeEndVal = ((Double)rangeEndDoubleValues.doubleValue()).longValue();
                 }
 
-                final Long rangeTotal = rangeEndVal - rangeStartVal;
+                // duration of the range
+                final Long rangeDuration = rangeEndVal - rangeStartVal;
 
+                // the actual value
                 double valueVal = Double.NaN;
                 final NumericDoubleValues valueDoubleValues = values[2];
                 if (valueDoubleValues.advanceExact(doc)) {
@@ -161,9 +168,6 @@ public class TimeSliceAggregator extends BucketsAggregator {
                 // round the last value
                 long lastRounded = rounding.round(Math.min(rangeEndVal, end) - offset) + offset;
 
-                //System.out.printf("%d has start: %d, end: %d and value: %f\n", doc,
-                //        startRounded, lastRounded, valueVal);
-
                 // add to all the buckets between first and last
                 long bucketStart = startRounded;
                 while (bucketStart <= lastRounded) {
@@ -171,12 +175,11 @@ public class TimeSliceAggregator extends BucketsAggregator {
 
                     // calculate the ratio of time spent in this bucket
                     long timeInBucket = getTimeInWindow(bucketStart, nextBucketStart, rangeStartVal, rangeEndVal);
-                    double bucketRatio = timeInBucket / rangeTotal.doubleValue();
+                    double bucketRatio = timeInBucket / rangeDuration.doubleValue();
 
                     // calculate the value that is proportional to the time spent in this bucket
                     double proportionalValue = valueVal * bucketRatio;
 
-                    //System.out.printf("Adding doc %d to bucket: %d\n", doc, bucketStart);
                     long bucketOrd = bucketOrds.add(bucketStart);
                     if (bucketOrd < 0) { // already seen
                         bucketOrd = -1 - bucketOrd;
@@ -204,29 +207,29 @@ public class TimeSliceAggregator extends BucketsAggregator {
     @Override
     public InternalAggregation buildAggregation(long owningBucketOrdinal) throws IOException {
         assert owningBucketOrdinal == 0;
-        List<InternalTimeSliceHistogram.Bucket> buckets = new ArrayList<>((int) bucketOrds.size());
+        List<InternalProportionalSumHistogram.Bucket> buckets = new ArrayList<>((int) bucketOrds.size());
         for (long i = 0; i < bucketOrds.size(); i++) {
             final long bucketOrd = bucketOrds.get(i);
-            buckets.add(new InternalTimeSliceHistogram.Bucket(bucketOrd, bucketDocCount(i), sums.get(i), keyed, formatter, bucketAggregations(i)));
+            buckets.add(new InternalProportionalSumHistogram.Bucket(bucketOrd, bucketDocCount(i), sums.get(i), keyed, formatter, bucketAggregations(i)));
         }
 
         // the contract of the histogram aggregation is that shards must return buckets ordered by key in ascending order
         CollectionUtil.introSort(buckets, BucketOrder.key(true).comparator(this));
 
         // value source will be null for unmapped fields
-        InternalTimeSliceHistogram.EmptyBucketInfo emptyBucketInfo = minDocCount == 0
-                ? new InternalTimeSliceHistogram.EmptyBucketInfo(rounding, buildEmptySubAggregations(), extendedBounds)
+        InternalProportionalSumHistogram.EmptyBucketInfo emptyBucketInfo = minDocCount == 0
+                ? new InternalProportionalSumHistogram.EmptyBucketInfo(rounding, buildEmptySubAggregations(), extendedBounds)
                 : null;
-        return new InternalTimeSliceHistogram(name, buckets, order, minDocCount, offset, emptyBucketInfo, formatter, keyed,
+        return new InternalProportionalSumHistogram(name, buckets, order, minDocCount, offset, emptyBucketInfo, formatter, keyed,
                 pipelineAggregators(), metaData());
     }
 
     @Override
     public InternalAggregation buildEmptyAggregation() {
-        InternalTimeSliceHistogram.EmptyBucketInfo emptyBucketInfo = minDocCount == 0
-                ? new InternalTimeSliceHistogram.EmptyBucketInfo(rounding, buildEmptySubAggregations(), extendedBounds)
+        InternalProportionalSumHistogram.EmptyBucketInfo emptyBucketInfo = minDocCount == 0
+                ? new InternalProportionalSumHistogram.EmptyBucketInfo(rounding, buildEmptySubAggregations(), extendedBounds)
                 : null;
-        return new InternalTimeSliceHistogram(name, Collections.emptyList(), order, minDocCount, offset, emptyBucketInfo, formatter, keyed,
+        return new InternalProportionalSumHistogram(name, Collections.emptyList(), order, minDocCount, offset, emptyBucketInfo, formatter, keyed,
                 pipelineAggregators(), metaData());
     }
 
