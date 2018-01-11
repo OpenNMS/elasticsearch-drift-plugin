@@ -1,5 +1,4 @@
-Elasticsearch Drift Plugin
-==========================
+# Elasticsearch Drift Plugin  [![CircleCI](https://circleci.com/gh/OpenNMS/elasticsearch-drift-plugin.svg?style=svg)](https://circleci.com/gh/OpenNMS/elasticsearch-drift-plugin)
 
 Time series aggregation for flow records.
 
@@ -8,8 +7,7 @@ Time series aggregation for flow records.
 | 1.0.0           | 6.1.1             |  TBD         |
 
 
-Usage
------
+## Usage
 
 ```json
 {
@@ -40,4 +38,3 @@ Usage
         }
 }
 ```
-
