@@ -73,7 +73,8 @@ public class ProportionalSumAggregatorIT extends ESIntegTestCase {
                 indexDoc(3, 2, 4),  // start: Mar 2, end: Apr 3
                 indexDoc(3, 15, 5), // start: Mar 15, end: Apr 16
                 indexDoc(3, 23, 6), // start: Mar 23, end: Apr 24
-                indexDoc(1,1, 4, 23, 6))); // start: Jan 1, end: Apr 23
+                indexDoc(1,1, 4, 23, 6), // start: Jan 1, end: Apr 23
+                indexDoc(1,2, 1, 2, 7))); // start: Jan 2, end: start
         indexRandom(true, builders);
         ensureSearchable();
     }
@@ -132,7 +133,7 @@ public class ProportionalSumAggregatorIT extends ESIntegTestCase {
             i++;
         }
 
-        assertThat(totalSumFromBuckets, closeTo(27d, 0.01));
+        assertThat(totalSumFromBuckets, closeTo(34d, 0.01));
 
         // start: Jan 2, end: Feb 3
         // start: Feb 2, end: Mar 3
@@ -147,8 +148,8 @@ public class ProportionalSumAggregatorIT extends ESIntegTestCase {
         // March tally: 6
         // April tally: 4
 
-        assertThat(buckets.get(0).getDocCount(), equalTo(2L));
-        assertThat(buckets.get(0).getValue(), closeTo(2.58d, 0.01));
+        assertThat(buckets.get(0).getDocCount(), equalTo(3L));
+        assertThat(buckets.get(0).getValue(), closeTo(9.58d, 0.01));
         assertThat(buckets.get(1).getDocCount(), equalTo(4L));
         assertThat(buckets.get(1).getValue(), closeTo(4.97d, 0.01));
         assertThat(buckets.get(2).getDocCount(), equalTo(6L));

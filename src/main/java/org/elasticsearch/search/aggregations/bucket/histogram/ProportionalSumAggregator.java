@@ -174,8 +174,14 @@ public class ProportionalSumAggregator extends BucketsAggregator {
                     long nextBucketStart = rounding.nextRoundingValue(bucketStart);
 
                     // calculate the ratio of time spent in this bucket
-                    long timeInBucket = getTimeInWindow(bucketStart, nextBucketStart, rangeStartVal, rangeEndVal);
-                    double bucketRatio = timeInBucket / rangeDuration.doubleValue();
+                    double bucketRatio;
+                    if (rangeDuration != 0) {
+                        long timeInBucket = getTimeInWindow(bucketStart, nextBucketStart, rangeStartVal, rangeEndVal);
+                        bucketRatio = timeInBucket / rangeDuration.doubleValue();
+                    } else {
+                        // start=end, so the document can only be in a single bucket, use the complete value
+                        bucketRatio = 1d;
+                    }
 
                     // calculate the value that is proportional to the time spent in this bucket
                     double proportionalValue = valueVal * bucketRatio;
