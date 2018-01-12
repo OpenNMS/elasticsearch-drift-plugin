@@ -144,12 +144,22 @@ public class ProportionalSumAggregator extends BucketsAggregator {
                 if (rangeStartDoubleValues.advanceExact(doc)) {
                     rangeStartVal = ((Double)rangeStartDoubleValues.doubleValue()).longValue();
                 }
+                if (rangeStartVal < 0) {
+                    throw new IllegalArgumentException("Invalid range start: " + rangeStartVal);
+                }
 
                 // end of the range
                 long rangeEndVal = 0;
                 final NumericDoubleValues rangeEndDoubleValues = values[1];
                 if (rangeEndDoubleValues.advanceExact(doc)) {
                     rangeEndVal = ((Double)rangeEndDoubleValues.doubleValue()).longValue();
+                }
+                if (rangeEndVal < 0) {
+                    throw new IllegalArgumentException("Invalid range end: " + rangeEndVal);
+                }
+                if (rangeEndVal < rangeStartVal) {
+                    throw new IllegalArgumentException("Start cannot be after end! start: " +
+                            rangeStartVal + " end: " + rangeEndVal);
                 }
 
                 // duration of the range
