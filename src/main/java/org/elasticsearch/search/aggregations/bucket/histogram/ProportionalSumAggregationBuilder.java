@@ -69,7 +69,7 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
 
     private long interval;
     private DateHistogramInterval dateHistogramInterval;
-    private long offset = 0;
+    private Long offset;
     private ExtendedBounds extendedBounds;
     private BucketOrder order = BucketOrder.key(true);
     private boolean keyed = false;
@@ -90,7 +90,7 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
         minDocCount = in.readVLong();
         interval = in.readLong();
         dateHistogramInterval = in.readOptionalWriteable(DateHistogramInterval::new);
-        offset = in.readLong();
+        offset = in.readOptionalLong();
         extendedBounds = in.readOptionalWriteable(ExtendedBounds::new);
         start = in.readOptionalLong();
         end = in.readOptionalLong();
@@ -103,7 +103,7 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
         out.writeVLong(minDocCount);
         out.writeLong(interval);
         out.writeOptionalWriteable(dateHistogramInterval);
-        out.writeLong(offset);
+        out.writeOptionalLong(offset);
         out.writeOptionalWriteable(extendedBounds);
         out.writeOptionalLong(start);
         out.writeOptionalLong(end);
@@ -162,13 +162,13 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
     }
 
     /** Get the offset to use when rounding, which is a number of milliseconds. */
-    public long offset() {
+    public Long offset() {
         return offset;
     }
 
     /** Set the offset on this builder, which is a number of milliseconds, and
      *  return the builder so that calls can be chained. */
-    public ProportionalSumAggregationBuilder offset(long offset) {
+    public ProportionalSumAggregationBuilder offset(Long offset) {
         this.offset = offset;
         return this;
     }
@@ -177,7 +177,8 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
      *  return the builder so that calls can be chained. */
     public ProportionalSumAggregationBuilder offset(String offset) {
         if (offset == null) {
-            throw new IllegalArgumentException("[offset] must not be null: [" + name + "]");
+            this.offset = null;
+            return this;
         }
         return offset(parseStringOffset(offset));
     }
@@ -279,7 +280,10 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
         } else {
             builder.field(Histogram.INTERVAL_FIELD.getPreferredName(), dateHistogramInterval.toString());
         }
-        builder.field(Histogram.OFFSET_FIELD.getPreferredName(), offset);
+
+        if (offset != null) {
+            builder.field(Histogram.OFFSET_FIELD.getPreferredName(), offset);
+        }
 
         if (order != null) {
             builder.field(Histogram.ORDER_FIELD.getPreferredName());
@@ -327,7 +331,16 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
             // parse any string bounds to longs and round
             roundedBounds = this.extendedBounds.parseAndValidate(name, context, format).round(rounding);
         }
-        return new ProportionalSumAggregatorFactory(name, configs, offset, order, keyed, minDocCount,
+        long effectiveOffset = 0;
+        if (offset != null) {
+            effectiveOffset = offset;
+        } else if (start != null) {
+            final long delta = start - rounding.round(start);
+            if (delta > 0) {
+                effectiveOffset = delta;
+            }
+        }
+        return new ProportionalSumAggregatorFactory(name, configs, effectiveOffset, order, keyed, minDocCount,
                 rounding, roundedBounds, context, parent, subFactoriesBuilder, metaData, start, end);
     }
 
