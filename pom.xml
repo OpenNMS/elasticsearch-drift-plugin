@@ -112,6 +112,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.20.1</version>
                 <configuration>
+                    <argLine>-Dtests.security.manager=false</argLine>
                     <excludes>
                         <exclude>**/*IT.java</exclude>
                     </excludes>
