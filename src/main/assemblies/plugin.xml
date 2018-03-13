@@ -7,25 +7,27 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <dependencySets>
         <dependencySet>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory>/elasticsearch/</outputDirectory>
             <useProjectArtifact>true</useProjectArtifact>
             <useTransitiveFiltering>true</useTransitiveFiltering>
             <excludes>
                 <exclude>org.elasticsearch:elasticsearch</exclude>
+                <exclude>com.vividsolutions:jts</exclude>
+                <exclude>org.locationtech.spatial4j:spatial4j</exclude>
                 <exclude>log4j:log4j</exclude>
             </excludes>
         </dependencySet>
     </dependencySets>
     <fileSets>
       <fileSet>
-        <outputDirectory>/</outputDirectory>
+        <outputDirectory>/elasticsearch/</outputDirectory>
         <includes>
           <include>LICENSE.txt</include>
         </includes>
       </fileSet>
       <fileSet>
         <directory>src/main/resources</directory>
-        <outputDirectory>/</outputDirectory>
+        <outputDirectory>/elasticsearch/</outputDirectory>
         <includes>
           <include>plugin-descriptor.properties</include>
         </includes>
