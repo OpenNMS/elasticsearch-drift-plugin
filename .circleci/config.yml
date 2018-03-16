@@ -40,6 +40,10 @@ jobs:
           key: v1-dependencies-{{ checksum "pom.xml" }}
 
       - run:
+          name: Install RPM
+          command: sudo apt-get update; sudo apt-get install rpm
+
+      - run:
           name: Run the tests
           command: |
             mvn test integration-test
@@ -49,6 +53,9 @@ jobs:
 
       - store_artifacts:
           path: target/releases
+
+      - store_artifacts:
+          path: target/rpm/elasticsearch-drift-plugin/RPMS/noarch
 
       - persist_to_workspace:
           root: /home/circleci
