@@ -65,6 +65,82 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/filtered-resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+	    <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>rpm-maven-plugin</artifactId>
+                    <version>2.1.5</version>
+                    <executions>
+                        <execution>
+                            <id>generate-rpm</id>
+                            <goals>
+                                <goal>rpm</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <summary>Time series aggregation for flow records in Elasticsearch</summary>
+                        <description>This plugin provides a new aggregation function proportional_sum that can be used to
+group documents that contain a date range into multiple buckets, and calculate a sum
+on a per bucket basis using a ratio that is proportional to the range of time in which
+the document spent in that bucket.
+
+This aggregation function behaves like a hybrid of both the Metrics and Bucket type
+aggregations since we both create buckets and calculate a new metric.</description>
+                        <license>Apache License, Version 2.0</license>
+                        <group>Applications/System</group>
+                        <prefix>/usr/share/elasticsearch/plugins</prefix>
+                        <defaultDirmode>755</defaultDirmode>
+                        <defaultFilemode>644</defaultFilemode>
+                        <defaultUsername>root</defaultUsername>
+                        <defaultGroupname>wheel</defaultGroupname>
+                        <defineStatements>
+                            <!-- <defineStatement>_unpackaged_files_terminate_build 0</defineStatement> -->
+                        </defineStatements>
+                        <requires>
+                            <require>elasticsearch = ${elasticsearch.version}</require>
+                        </requires>
+                        <mappings>
+                            <mapping>
+                                <directory>/usr/share/elasticsearch/plugins/drift</directory>
+                                <sources>
+                                    <source><location>target/classes/plugin-descriptor.properties</location></source>
+                                </sources>
+                            </mapping>
+                            <mapping>
+                                <directory>/usr/share/elasticsearch/plugins/drift</directory>
+                                <sources>
+                                    <source><location>target/${project.name}-${project.version}.jar</location></source>
+                                </sources>
+                            </mapping>
+                            <mapping>
+                                <directory>/usr/share/elasticsearch/plugins/drift</directory>
+                                <dependency>
+                                    <includes>
+                                        <include>org.elasticsearch.plugin:aggs-matrix-stats-client</include>
+                                    </includes>
+                                </dependency>
+                            </mapping>
+                            <mapping>
+                                <directory>/usr/share/doc/elasticsearch-drift-plugin</directory>
+                                <documentation>true</documentation>
+                                <sources>
+                                    <source><location>LICENSE.txt</location></source>
+                                    <source><location>README.md</location></source>
+                                </sources>
+                            </mapping>
+                        </mappings>
+                    </configuration>
+                </plugin>
+            </plugins>
+	</pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -149,6 +225,42 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>build.rpms.usr</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <file>
+                    <exists>/usr/bin/rpmbuild</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>rpm-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>build.rpms.usr.clocal</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <file>
+                    <exists>/usr/local/bin/rpmbuild</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>rpm-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <distributionManagement>
       <snapshotRepository>
