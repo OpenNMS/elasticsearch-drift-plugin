@@ -23,6 +23,8 @@
 
     <properties>
         <elasticsearch.version>6.2.2</elasticsearch.version>
+        <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
+        <rpmRelease>0.${maven.build.timestamp}.SNAPSHOT</rpmRelease>
     </properties>
 
     <dependencies>
@@ -71,7 +73,7 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
-	    <pluginManagement>
+        <pluginManagement>
             <plugins>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
@@ -101,6 +103,7 @@ aggregations since we both create buckets and calculate a new metric.</descripti
                         <defaultFilemode>644</defaultFilemode>
                         <defaultUsername>root</defaultUsername>
                         <defaultGroupname>wheel</defaultGroupname>
+                        <release>${rpmRelease}</release>
                         <defineStatements>
                             <!-- <defineStatement>_unpackaged_files_terminate_build 0</defineStatement> -->
                         </defineStatements>
@@ -140,7 +143,7 @@ aggregations since we both create buckets and calculate a new metric.</descripti
                     </configuration>
                 </plugin>
             </plugins>
-	</pluginManagement>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
