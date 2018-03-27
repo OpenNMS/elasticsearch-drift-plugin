@@ -16,6 +16,9 @@ build-eclipse/
 nb-configuration.xml
 nbactions.xml
 
+# vim
+.*.swp
+
 # gradle stuff
 .gradle/
 build/
