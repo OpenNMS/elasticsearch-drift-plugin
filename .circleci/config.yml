@@ -83,6 +83,27 @@ jobs:
           command: |
             mvn -s .circleci.settings.xml -DskipTests deploy
 
+      - restore_cache:
+          keys:
+          - pip-cache-{{ checksum "pom.xml" }}
+          # fallback to using the latest cache if no exact match is found
+          - pip-cache-
+
+      - run:
+          name: Install AWS client
+          command: |
+            pip install awscli --upgrade --user
+
+      - save_cache:
+          paths:
+            - ~/.cache/pip
+          key: pip-cache-{{ checksum "pom.xml" }}
+
+      - run:
+          name: Deploy the RPM to S3
+          command: |
+            aws s3 sync target/rpm/elasticsearch-drift-plugin/RPMS/noarch/ s3://opennms-circleci-resources/elasticsearch-drift-plugin/
+
 workflows:
   version: 2
   build-deploy:
@@ -93,4 +114,5 @@ workflows:
             - build
           filters:
             branches:
-              only: master
+              only:
+               - master
