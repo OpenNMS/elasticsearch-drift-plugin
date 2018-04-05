@@ -139,3 +139,12 @@ This allows for the documents themselves to be contain wider ranges for which we
 ```
 
 Here we can see that many buckets were generated for the single document and that the value was spread into these buckets accordingly.
+
+## Build and install
+
+Prerequisite: Elasticsearch 6.2.2 installed. No other version will work.
+
+1. clone repository: git clone git@github.com:OpenNMS/elasticsearch-drift-plugin.git
+1. build: mvn package
+1. install: /usr/share/elasticsearch/bin/elasticsearch-plugin install file:///path/to/elasticsearch-drift/plugin/target/releases/elasticsearch-drift-plugin-1.0.0-SNAPSHOT.zip
+
