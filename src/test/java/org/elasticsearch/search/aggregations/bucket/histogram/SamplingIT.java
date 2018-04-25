@@ -67,10 +67,10 @@ public class SamplingIT extends ESIntegTestCase {
         createIndex("idx", "idx_unmapped");
         List<IndexRequestBuilder> builders = new ArrayList<>();
         builders.addAll(Arrays.asList(
-                indexDoc(1, 1, 2, 1, 100, 1.0),
-                indexDoc(1, 1, 2, 1, 1, 100.0),
-                indexDoc(1, 1, 2, 1, 2, 50.0),
-                indexDoc(1, 1, 2, 1, 3, 100.0 / 3.0)));
+                indexDoc(1, 1, 1, 31, 100, 1.0),
+                indexDoc(1, 1, 1, 31, 1, 100.0),
+                indexDoc(1, 1, 1, 31, 2, 50.0),
+                indexDoc(1, 1, 1, 31, 3, 100.0 / 3.0)));
         indexRandom(true, builders);
         ensureSearchable();
     }
@@ -109,7 +109,7 @@ public class SamplingIT extends ESIntegTestCase {
                         .fields(Arrays.asList("start", "end", "value", "interval"))
                         .dateHistogramInterval(DateHistogramInterval.MONTH)
                         .start(new DateTime(2012, 1, 1, 0, 0, DateTimeZone.UTC).getMillis())
-                        .end(new DateTime(2012, 2, 1, 0, 0, DateTimeZone.UTC).getMillis())
+                        .end(new DateTime(2012, 1, 31, 0, 0, DateTimeZone.UTC).getMillis())
                         .order(BucketOrder.key(true))
                 )
                 .execute().actionGet();
