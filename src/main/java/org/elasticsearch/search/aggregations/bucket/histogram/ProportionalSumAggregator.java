@@ -134,8 +134,8 @@ public class ProportionalSumAggregator extends BucketsAggregator {
             @Override
             public void collect(int doc, long bucket) throws IOException {
                 assert bucket == 0;
-                if (fieldVals.length != 3) {
-                    throw new IllegalStateException("Invalid number of fields specified. Need 3, got " + fieldVals.length);
+                if (fieldVals.length != 4) {
+                    throw new IllegalStateException("Invalid number of fields specified. Need 4, got " + fieldVals.length);
                 }
 
                 // start of the range
@@ -170,6 +170,12 @@ public class ProportionalSumAggregator extends BucketsAggregator {
                 final NumericDoubleValues valueDoubleValues = values[2];
                 if (valueDoubleValues.advanceExact(doc)) {
                     valueVal = valueDoubleValues.doubleValue();
+                }
+
+                // scale value by sampling interval
+                final NumericDoubleValues samplingDoubleValues = values[3];
+                if (samplingDoubleValues.advanceExact(doc)) {
+                    valueVal *= samplingDoubleValues.doubleValue();
                 }
 
                 // round the first value
