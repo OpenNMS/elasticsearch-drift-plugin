@@ -107,7 +107,7 @@ public class OffsetIT extends ESIntegTestCase {
         SearchResponse response = client().prepareSearch("idx")
                 .setSize(0)
                 .addAggregation(new ProportionalSumAggregationBuilder("histo")
-                        .fields(Arrays.asList("start","end","value", "interval"))
+                        .fields(Arrays.asList("start", "end", "value", "interval"))
                         .dateHistogramInterval(DateHistogramInterval.MONTH)
                         .start(start.getMillis())
                         .end(end.getMillis())
