@@ -95,6 +95,7 @@ public class OffsetIT extends ESIntegTestCase {
                 .field("constant", 1)
                 .field("start", start)
                 .field("end", end)
+                .field("interval", 1.0)
                 .endObject());
     }
 
