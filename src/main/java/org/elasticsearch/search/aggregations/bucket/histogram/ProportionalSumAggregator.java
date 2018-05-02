@@ -174,7 +174,7 @@ public class ProportionalSumAggregator extends BucketsAggregator {
 
                 // scale value by sampling interval
                 final NumericDoubleValues samplingDoubleValues = values[3];
-                if (samplingDoubleValues.advanceExact(doc)) {
+                if (samplingDoubleValues.advanceExact(doc) && samplingDoubleValues.doubleValue() != 0.0) {
                     valueVal *= samplingDoubleValues.doubleValue();
                 }
 
