@@ -52,7 +52,7 @@ import org.junit.Test;
 import org.opennms.elasticsearch.plugin.DriftPlugin;
 
 @ESIntegTestCase.SuiteScopeTestCase
-public class OffsetIT extends ESIntegTestCase {
+public class SamplingIT extends ESIntegTestCase {
 
     protected Collection<Class<? extends Plugin>> nodePlugins() {
         return Arrays.asList(DriftPlugin.class, PainlessPlugin.class);
@@ -67,27 +67,29 @@ public class OffsetIT extends ESIntegTestCase {
         createIndex("idx", "idx_unmapped");
         List<IndexRequestBuilder> builders = new ArrayList<>();
         builders.addAll(Arrays.asList(
-                indexDoc(11, 31, 1)
-        ));
+                indexDoc(1, 1, 1, 31, 100, 1.0),
+                indexDoc(1, 1, 1, 31, 1, 100.0),
+                indexDoc(1, 1, 1, 31, 2, 50.0),
+                indexDoc(1, 1, 1, 31, 3, 100.0 / 3.0)));
         indexRandom(true, builders);
         ensureSearchable();
     }
 
-    private DateTime date(int hourOfDay, int minuteOfHour) {
-        return new DateTime(2018, 2, 12, hourOfDay, minuteOfHour, DateTimeZone.UTC);
+    private DateTime date(int month, int day) {
+        return new DateTime(2012, month, day, 0, 0, DateTimeZone.UTC);
     }
 
     private DateTime date(String date) {
         return DateFieldMapper.DEFAULT_DATE_TIME_FORMATTER.parser().parseDateTime(date);
     }
 
-    private IndexRequestBuilder indexDoc(int hourOfDay, int minuteOfHour, int value) throws Exception {
-        return indexDoc(hourOfDay, minuteOfHour, hourOfDay, minuteOfHour+1, value);
+    private IndexRequestBuilder indexDoc(int month, int day, int value, double interval) throws Exception {
+        return indexDoc(month, day, month + 1, day + 1, value, interval);
     }
 
-    private IndexRequestBuilder indexDoc(int startHourOfDay, int startMinuteOfHour, int endHourOfDay, int endMinuteOfHour, int value) throws Exception {
-        final DateTime start = date(startHourOfDay, startMinuteOfHour);
-        final DateTime end = date(endHourOfDay, endMinuteOfHour);
+    private IndexRequestBuilder indexDoc(int startMonth, int startDay, int endMonth, int endDay, int value, double interval) throws Exception {
+        final DateTime start = date(startMonth, startDay);
+        final DateTime end = date(endMonth, endDay);
 
         return client().prepareIndex("idx", "type").setSource(jsonBuilder()
                 .startObject()
@@ -95,23 +97,19 @@ public class OffsetIT extends ESIntegTestCase {
                 .field("constant", 1)
                 .field("start", start)
                 .field("end", end)
-                .field("interval", 1.0)
+                .field("interval", interval)
                 .endObject());
     }
 
     @Test
-    public void testOffsetCalculation() {
-        DateTime start = new DateTime(2018, 2, 12, 11, 10, DateTimeZone.UTC);
-        DateTime end = new DateTime(2018, 2, 12, 11, 40, DateTimeZone.UTC);
-
+    public void testAggregateWithInterval() {
         SearchResponse response = client().prepareSearch("idx")
                 .setSize(0)
                 .addAggregation(new ProportionalSumAggregationBuilder("histo")
                         .fields(Arrays.asList("start", "end", "value", "interval"))
                         .dateHistogramInterval(DateHistogramInterval.MONTH)
-                        .start(start.getMillis())
-                        .end(end.getMillis())
-                        .interval(30 * 1000)
+                        .start(new DateTime(2012, 1, 1, 0, 0, DateTimeZone.UTC).getMillis())
+                        .end(new DateTime(2012, 1, 31, 0, 0, DateTimeZone.UTC).getMillis())
                         .order(BucketOrder.key(true))
                 )
                 .execute().actionGet();
@@ -124,9 +122,34 @@ public class OffsetIT extends ESIntegTestCase {
         List<? extends HistogramBucketWithValue> buckets = (List<? extends HistogramBucketWithValue>) histo.getBuckets();
         assertThat(buckets.size(), equalTo(1));
 
-        assertThat(buckets.get(0).getDocCount(), equalTo(1L));
-        // The bucket key should match the given start
-        assertThat(buckets.get(0).getKey(), equalTo(start));
-        assertThat(buckets.get(0).getValue(), closeTo(1.00d, 0.01));
+        assertThat(buckets.get(0).getKey(), equalTo(new DateTime(2012, 1, 1, 0, 0, DateTimeZone.UTC)));
+        assertThat(buckets.get(0).getDocCount(), equalTo(4L));
+        assertThat(buckets.get(0).getValue(), closeTo(400.0, 0.01));
+    }
+
+    @Test
+    public void testAggregateWithoutInterval() {
+        SearchResponse response = client().prepareSearch("idx")
+                .setSize(0)
+                .addAggregation(new ProportionalSumAggregationBuilder("histo")
+                        .fields(Arrays.asList("start", "end", "value"))
+                        .dateHistogramInterval(DateHistogramInterval.MONTH)
+                        .start(new DateTime(2012, 1, 1, 0, 0, DateTimeZone.UTC).getMillis())
+                        .end(new DateTime(2012, 1, 31, 0, 0, DateTimeZone.UTC).getMillis())
+                        .order(BucketOrder.key(true))
+                )
+                .execute().actionGet();
+
+        assertSearchResponse(response);
+
+        Histogram histo = response.getAggregations().get("histo");
+        assertThat(histo, notNullValue());
+        assertThat(histo.getName(), equalTo("histo"));
+        List<? extends HistogramBucketWithValue> buckets = (List<? extends HistogramBucketWithValue>) histo.getBuckets();
+        assertThat(buckets.size(), equalTo(1));
+
+        assertThat(buckets.get(0).getKey(), equalTo(new DateTime(2012, 1, 1, 0, 0, DateTimeZone.UTC)));
+        assertThat(buckets.get(0).getDocCount(), equalTo(4L));
+        assertThat(buckets.get(0).getValue(), closeTo(106.0, 0.01));
     }
 }

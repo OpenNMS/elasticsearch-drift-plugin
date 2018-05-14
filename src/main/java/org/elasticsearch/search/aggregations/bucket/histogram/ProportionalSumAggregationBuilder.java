@@ -315,9 +315,9 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
 
     protected static ValuesSourceConfig<ValuesSource.Numeric> getValueSourceForRangeStart(Map<String, ValuesSourceConfig<ValuesSource.Numeric>> configs) {
         final int numActualConfigs = configs != null ? configs.size() : 0;
-        if (numActualConfigs != 3) {
+        if (numActualConfigs < 3 || numActualConfigs > 4) {
             throw new IllegalArgumentException(
-                    "[values] must contain 3 values. Found [" + numActualConfigs + "].");
+                    "[values] must contain 3 or 4 values. Found [" + numActualConfigs + "].");
         }
         return configs.values().iterator().next();
     }
