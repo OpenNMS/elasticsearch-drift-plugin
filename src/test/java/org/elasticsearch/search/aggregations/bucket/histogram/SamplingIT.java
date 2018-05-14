@@ -126,4 +126,30 @@ public class SamplingIT extends ESIntegTestCase {
         assertThat(buckets.get(0).getDocCount(), equalTo(4L));
         assertThat(buckets.get(0).getValue(), closeTo(400.0, 0.01));
     }
+
+    @Test
+    public void testAggregateWithoutInterval() {
+        SearchResponse response = client().prepareSearch("idx")
+                .setSize(0)
+                .addAggregation(new ProportionalSumAggregationBuilder("histo")
+                        .fields(Arrays.asList("start", "end", "value"))
+                        .dateHistogramInterval(DateHistogramInterval.MONTH)
+                        .start(new DateTime(2012, 1, 1, 0, 0, DateTimeZone.UTC).getMillis())
+                        .end(new DateTime(2012, 1, 31, 0, 0, DateTimeZone.UTC).getMillis())
+                        .order(BucketOrder.key(true))
+                )
+                .execute().actionGet();
+
+        assertSearchResponse(response);
+
+        Histogram histo = response.getAggregations().get("histo");
+        assertThat(histo, notNullValue());
+        assertThat(histo.getName(), equalTo("histo"));
+        List<? extends HistogramBucketWithValue> buckets = (List<? extends HistogramBucketWithValue>) histo.getBuckets();
+        assertThat(buckets.size(), equalTo(1));
+
+        assertThat(buckets.get(0).getKey(), equalTo(new DateTime(2012, 1, 1, 0, 0, DateTimeZone.UTC)));
+        assertThat(buckets.get(0).getDocCount(), equalTo(4L));
+        assertThat(buckets.get(0).getValue(), closeTo(106.0, 0.01));
+    }
 }

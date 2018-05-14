@@ -101,7 +101,6 @@ public class ProportionalSumAggregatorIT extends ESIntegTestCase {
                 .field("constant", 1)
                 .field("start", start)
                 .field("end", end)
-                .field("interval", 1.0)
                 .endObject());
     }
 
@@ -110,7 +109,7 @@ public class ProportionalSumAggregatorIT extends ESIntegTestCase {
         SearchResponse response = client().prepareSearch("idx")
                 .setSize(0)
                 .addAggregation(new ProportionalSumAggregationBuilder("histo")
-                        .fields(Arrays.asList("start", "end", "value", "interval"))
+                        .fields(Arrays.asList("start","end","value"))
                         .dateHistogramInterval(DateHistogramInterval.MONTH)
                         .start(new DateTime(2012, 1, 1, 0, 0, DateTimeZone.UTC).getMillis())
                         .end(new DateTime(2012, 5, 1, 0, 0, DateTimeZone.UTC).getMillis())
