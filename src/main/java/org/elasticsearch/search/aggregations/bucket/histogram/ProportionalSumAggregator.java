@@ -173,12 +173,12 @@ public class ProportionalSumAggregator extends BucketsAggregator {
                 }
 
                 // scale value by sampling interval
-		if (values.length == 4) {
+                if (values.length == 4) {
                     final NumericDoubleValues samplingDoubleValues = values[3];
-                    if (samplingDoubleValues.advanceExact(doc) && samplingDoubleValues.doubleValue() != 0.0) {
+                    if (samplingDoubleValues.advanceExact(doc) && Double.isFinite(samplingDoubleValues.doubleValue()) && samplingDoubleValues.doubleValue() != 0.0) {
                         valueVal *= samplingDoubleValues.doubleValue();
                     }
-		}
+                }
 
                 // round the first value
                 long startRounded = rounding.round(Math.max(rangeStartVal, start) - offset) + offset;
