@@ -22,7 +22,7 @@
     </parent>
 
     <properties>
-        <elasticsearch.version>6.2.2</elasticsearch.version>
+        <elasticsearch.version>6.2.4</elasticsearch.version>
         <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
         <rpmRelease>0.${maven.build.timestamp}.SNAPSHOT</rpmRelease>
     </properties>
