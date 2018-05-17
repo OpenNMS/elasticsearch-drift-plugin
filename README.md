@@ -2,10 +2,9 @@
 
 Time series aggregation for flow records.
 
-|   Drift Plugin  | Elasticsearch     | Release date |
-|-----------------|-------------------|:------------:|
-| 1.0.0           | 6.2.4             |  TBD         |
-
+|   Drift Plugin  | Elasticsearch     | Release date   |
+|-----------------|-------------------|:--------------:|
+| 1.0.0           | 6.2.4             |  May 16th 2018 |
 
 ## Overview
 
@@ -15,6 +14,40 @@ This plugin provides a new aggregation function `proportional_sum` that can be u
 1. Calculate a sum on a per bucket basis using a ratio that is proportional to the range of time in which the document spent in that bucket.
 
 This aggregation function behaves like a hybrid of both the `Metrics` and `Bucket` type aggregations since we both create buckets and calculate a new metric.
+
+## Installation
+
+### RPM
+
+Install the package repository:
+```
+sudo yum install https://yum.opennms.org/repofiles/opennms-repo-stable-rhel7.noarch.rpm
+sudo rpm --import https://yum.opennms.org/OPENNMS-GPG-KEY
+```
+
+Install the package:
+```
+sudo yum install elasticsearch-drift-plugin
+```
+
+### Debian
+
+Create a new apt source file (eg: `/etc/apt/sources.list.d/opennms.list`), and add the following 2 lines:
+```
+deb https://debian.opennms.org stable main
+deb-src https://debian.opennms.org stable main
+```
+
+Import the packages' authentication key with the following command:
+```
+wget -O - https://debian.opennms.org/OPENNMS-GPG-KEY | sudo apt-key add -
+```
+
+Install the package:
+```
+sudo apt-get update
+sudo apt-get install elasticsearch-drift-plugin
+```
 
 ## Use Case
 
@@ -139,3 +172,19 @@ This allows for the documents themselves to be contain wider ranges for which we
 ```
 
 Here we can see that many buckets were generated for the single document and that the value was spread into these buckets accordingly.
+
+## Building and installing from source
+
+To compile the plugin run:
+```
+mvn clean package
+```
+
+Next, ensure setup an Elasticsearch instance using the same version that is defined in the `pom.xml`.
+The version must match exactly, otherwise Elasticsearch will refuse to start.
+
+Install the plugin using:
+```
+/usr/share/elasticsearch/bin/elasticsearch-plugin install file:///path/to/elasticsearch-drift/plugin/target/releases/elasticsearch-drift-plugin-1.0.0-SNAPSHOT.zip
+```
+
