@@ -89,6 +89,7 @@
                         </execution>
                     </executions>
                     <configuration>
+                        <targetDir>${project.build.directory}/releases</targetDir>
                         <packageVersion>${project.version}</packageVersion>
                         <packageRevision>1</packageRevision>
                         <packageSection>contrib/net</packageSection>
