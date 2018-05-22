@@ -40,8 +40,8 @@ jobs:
           key: v1-dependencies-{{ checksum "pom.xml" }}
 
       - run:
-          name: Install RPM
-          command: sudo apt-get update; sudo apt-get install rpm
+          name: Install Packaging Dependencies
+          command: sudo apt-get update; sudo apt-get install rpm build-essential
 
       - run:
           name: Run the tests
@@ -103,6 +103,11 @@ jobs:
           name: Deploy the RPM to S3
           command: |
             aws s3 sync target/rpm/elasticsearch-drift-plugin/RPMS/noarch/ s3://opennms-circleci-resources/elasticsearch-drift-plugin/
+
+      - run:
+          name: Deploy the Deb file to S3
+          command: |
+            aws s3 sync target/releases/*.deb s3://opennms-circleci-resources/elasticsearch-drift-plugin/
 
 workflows:
   version: 2
