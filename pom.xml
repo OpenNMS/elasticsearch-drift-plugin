@@ -79,6 +79,7 @@
                 <plugin>
                     <groupId>net.sf.debian-maven</groupId>
                     <artifactId>debian-maven-plugin</artifactId>
+                    <version>1.0.6</version>
                     <executions>
                         <execution>
                             <id>generate-deb</id>
