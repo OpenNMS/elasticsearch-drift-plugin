@@ -107,7 +107,7 @@ jobs:
       - run:
           name: Deploy the Deb file to S3
           command: |
-            aws s3 sync target/releases/*.deb s3://opennms-circleci-resources/elasticsearch-drift-plugin/
+            aws s3 sync --exclude '*' --include '*.deb' target/releases/ s3://opennms-circleci-resources/elasticsearch-drift-plugin/
 
 workflows:
   version: 2
