@@ -6,7 +6,7 @@
 
     <groupId>org.opennms.elasticsearch</groupId>
     <artifactId>elasticsearch-drift-plugin</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.2</version>
 
     <licenses>
         <license>
@@ -24,7 +24,7 @@
     <properties>
         <elasticsearch.version>6.2.4</elasticsearch.version>
         <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
-        <rpmRelease>0.${maven.build.timestamp}.SNAPSHOT</rpmRelease>
+        <rpmRelease>${project.version}</rpmRelease>
         <packageSummary>Time series aggregation for flow records in Elasticsearch</packageSummary>
     </properties>
 
