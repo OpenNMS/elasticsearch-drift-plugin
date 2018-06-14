@@ -24,7 +24,7 @@
     <properties>
         <elasticsearch.version>6.2.4</elasticsearch.version>
         <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
-        <rpmRelease>${project.version}</rpmRelease>
+        <rpmRelease>2</rpmRelease>
         <packageSummary>Time series aggregation for flow records in Elasticsearch</packageSummary>
     </properties>
 
