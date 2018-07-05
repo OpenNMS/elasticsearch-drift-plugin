@@ -94,7 +94,6 @@
                         <packageRevision>1</packageRevision>
                         <packageSection>contrib/net</packageSection>
                         <packageTitle>${packageSummary}</packageTitle>
-                        <packageDescription>${packageDescription}</packageDescription>
                         <packageDescription>This plugin provides a new aggregation function proportional_sum that can be used to
  group documents that contain a date range into multiple buckets, and calculate a sum
  on a per bucket basis using a ratio that is proportional to the range of time in which
@@ -105,6 +104,8 @@
                         <packageDependencies>
                             <packageDependency>elasticsearch (= ${elasticsearch.version})</packageDependency>
                         </packageDependencies>
+                        <maintainerName>Benjamin Reed</maintainerName>
+                        <maintainerEmail>ranger@opennms.org</maintainerEmail>
                         <excludeAllArtifacts>true</excludeAllArtifacts>
                         <excludeAllDependencies>true</excludeAllDependencies>
                         <includeAttachedArtifacts>false</includeAttachedArtifacts>
