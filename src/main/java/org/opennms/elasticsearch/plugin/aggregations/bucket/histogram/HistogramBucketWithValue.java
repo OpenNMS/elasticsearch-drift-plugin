@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.elasticsearch.search.aggregations.bucket.histogram;
+package org.opennms.elasticsearch.plugin.aggregations.bucket.histogram;
+
+import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 
 /**
  * A histogram bucket that has some value.

@@ -22,8 +22,11 @@
     </parent>
 
     <properties>
-        <elasticsearch.version>6.2.4</elasticsearch.version>
-        <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
+        <elasticsearch.version>6.5.4</elasticsearch.version>
+	
+	<!-- We use the build timestamp in the RPM version, so change the format to ensure that there
+	     are no invalid characters such as colons (:) -->
+        <maven.build.timestamp.format>yyyy_MM_dd_HH_mm</maven.build.timestamp.format>
         <rpmRelease>0.${maven.build.timestamp}.SNAPSHOT</rpmRelease>
         <packageSummary>Time series aggregation for flow records in Elasticsearch</packageSummary>
     </properties>
@@ -33,13 +36,13 @@
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch</artifactId>
             <version>${elasticsearch.version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.plugin</groupId>
             <artifactId>aggs-matrix-stats-client</artifactId>
             <version>${elasticsearch.version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.test</groupId>

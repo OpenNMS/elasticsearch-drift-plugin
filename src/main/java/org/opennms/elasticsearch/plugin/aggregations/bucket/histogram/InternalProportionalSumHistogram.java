@@ -16,16 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.elasticsearch.search.aggregations.bucket.histogram;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Objects;
+package org.opennms.elasticsearch.plugin.aggregations.bucket.histogram;
 
 import org.apache.lucene.util.CollectionUtil;
 import org.apache.lucene.util.PriorityQueue;
@@ -49,6 +40,15 @@ import org.elasticsearch.search.aggregations.pipeline.PipelineAggregator;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Objects;
+
 /**
  * Copy of {@link org.elasticsearch.search.aggregations.bucket.histogram.InternalDateHistogram} with the addition
  * of each bucket having a (double) value.
@@ -56,7 +56,7 @@ import org.joda.time.DateTimeZone;
 public final class InternalProportionalSumHistogram extends InternalMultiBucketAggregation<InternalProportionalSumHistogram, InternalProportionalSumHistogram.Bucket>
         implements Histogram, HistogramFactory {
 
-    public static class Bucket extends InternalMultiBucketAggregation.InternalBucket implements Histogram.Bucket, KeyComparable<Bucket>, HistogramBucketWithValue {
+    public static class Bucket extends InternalMultiBucketAggregation.InternalBucket implements Histogram.Bucket, HistogramBucketWithValue, KeyComparable<Bucket> {
 
         final long key;
         final long docCount;
@@ -94,7 +94,7 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
             }
             InternalProportionalSumHistogram.Bucket that = (InternalProportionalSumHistogram.Bucket) obj;
             // No need to take the keyed and format parameters into account,
-            // they are already stored and tested on the InternalProportionalSumHistogram object
+            // they are already stored and tested on the InternalDateHistogram object
             return key == that.key
                     && docCount == that.docCount
                     && value == that.value
@@ -103,7 +103,7 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
 
         @Override
         public int hashCode() {
-            return Objects.hash(getClass(), key, docCount, value, aggregations);
+            return Objects.hash(getClass(), key, docCount, aggregations, value);
         }
 
         @Override
@@ -116,7 +116,7 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
 
         @Override
         public String getKeyAsString() {
-            return format.format(key);
+            return format.format(key).toString();
         }
 
         @Override
@@ -151,7 +151,7 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            String keyAsString = format.format(key);
+            String keyAsString = format.format(key).toString();
             if (keyed) {
                 builder.startObject(keyAsString);
             } else {
@@ -241,9 +241,9 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
     private final EmptyBucketInfo emptyBucketInfo;
 
     InternalProportionalSumHistogram(String name, List<Bucket> buckets, BucketOrder order, long minDocCount, long offset,
-                               EmptyBucketInfo emptyBucketInfo,
-                               DocValueFormat formatter, boolean keyed, List<PipelineAggregator> pipelineAggregators,
-                               Map<String, Object> metaData) {
+                                     EmptyBucketInfo emptyBucketInfo,
+                                     DocValueFormat formatter, boolean keyed, List<PipelineAggregator> pipelineAggregators,
+                                     Map<String, Object> metaData) {
         super(name, pipelineAggregators, metaData);
         this.buckets = buckets;
         this.order = order;
@@ -345,7 +345,7 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
         };
         for (InternalAggregation aggregation : aggregations) {
             InternalProportionalSumHistogram histogram = (InternalProportionalSumHistogram) aggregation;
-            if (!histogram.buckets.isEmpty()) {
+            if (histogram.buckets.isEmpty() == false) {
                 pq.add(new IteratorAndCurrent(histogram.buckets.iterator()));
             }
         }
@@ -363,7 +363,10 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
                     // the key changes, reduce what we already buffered and reset the buffer for current buckets
                     final Bucket reduced = currentBuckets.get(0).reduce(currentBuckets, reduceContext);
                     if (reduced.getDocCount() >= minDocCount || reduceContext.isFinalReduce() == false) {
+                        reduceContext.consumeBucketsAndMaybeBreak(1);
                         reducedBuckets.add(reduced);
+                    } else {
+                        reduceContext.consumeBucketsAndMaybeBreak(-countInnerBucket(reduced));
                     }
                     currentBuckets.clear();
                     key = top.current.key;
@@ -384,7 +387,10 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
             if (currentBuckets.isEmpty() == false) {
                 final Bucket reduced = currentBuckets.get(0).reduce(currentBuckets, reduceContext);
                 if (reduced.getDocCount() >= minDocCount || reduceContext.isFinalReduce() == false) {
+                    reduceContext.consumeBucketsAndMaybeBreak(1);
                     reducedBuckets.add(reduced);
+                } else {
+                    reduceContext.consumeBucketsAndMaybeBreak(-countInnerBucket(reduced));
                 }
             }
         }
@@ -407,7 +413,8 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
                     long key = bounds.getMin() + offset;
                     long max = bounds.getMax() + offset;
                     while (key <= max) {
-                        iter.add(new InternalProportionalSumHistogram.Bucket(key, 0, 0.0d, keyed, format, reducedEmptySubAggs));
+                        reduceContext.consumeBucketsAndMaybeBreak(1);
+                        iter.add(new InternalProportionalSumHistogram.Bucket(key, 0, 0, keyed, format, reducedEmptySubAggs));
                         key = nextKey(key).longValue();
                     }
                 }
@@ -416,7 +423,8 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
                     long key = bounds.getMin() + offset;
                     if (key < firstBucket.key) {
                         while (key < firstBucket.key) {
-                            iter.add(new InternalProportionalSumHistogram.Bucket(key, 0, 0.0d, keyed, format, reducedEmptySubAggs));
+                            reduceContext.consumeBucketsAndMaybeBreak(1);
+                            iter.add(new InternalProportionalSumHistogram.Bucket(key, 0, 0, keyed, format, reducedEmptySubAggs));
                             key = nextKey(key).longValue();
                         }
                     }
@@ -431,10 +439,11 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
             if (lastBucket != null) {
                 long key = nextKey(lastBucket.key).longValue();
                 while (key < nextBucket.key) {
-                    iter.add(new InternalProportionalSumHistogram.Bucket(key, 0, 0.0d, keyed, format, reducedEmptySubAggs));
+                    reduceContext.consumeBucketsAndMaybeBreak(1);
+                    iter.add(new InternalProportionalSumHistogram.Bucket(key, 0, 0, keyed, format, reducedEmptySubAggs));
                     key = nextKey(key).longValue();
                 }
-                assert key == nextBucket.key;
+                assert key == nextBucket.key : "key: " + key + ", nextBucket.key: " + nextBucket.key;
             }
             lastBucket = iter.next();
         }
@@ -444,7 +453,8 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
             long key = nextKey(lastBucket.key).longValue();
             long max = bounds.getMax() + offset;
             while (key <= max) {
-                iter.add(new InternalProportionalSumHistogram.Bucket(key, 0, 0.0d, keyed, format, reducedEmptySubAggs));
+                reduceContext.consumeBucketsAndMaybeBreak(1);
+                iter.add(new InternalProportionalSumHistogram.Bucket(key, 0, 0, keyed, format, reducedEmptySubAggs));
                 key = nextKey(key).longValue();
             }
         }
@@ -521,7 +531,7 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
 
     @Override
     public Bucket createBucket(Number key, long docCount, InternalAggregations aggregations) {
-        return new Bucket(key.longValue(), docCount, 0.0d, keyed, format, aggregations);
+        return new Bucket(key.longValue(), docCount, 0, keyed, format, aggregations);
     }
 
     @Override

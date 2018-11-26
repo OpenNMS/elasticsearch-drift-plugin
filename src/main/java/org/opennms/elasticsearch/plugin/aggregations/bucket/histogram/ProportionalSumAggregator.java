@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.elasticsearch.search.aggregations.bucket.histogram;
+package org.opennms.elasticsearch.plugin.aggregations.bucket.histogram;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,15 +36,13 @@ import java.util.Map;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.util.CollectionUtil;
-import org.elasticsearch.common.inject.internal.Nullable;
 import org.elasticsearch.common.lease.Releasables;
 import org.elasticsearch.common.rounding.Rounding;
 import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.common.util.DoubleArray;
 import org.elasticsearch.common.util.LongHash;
-import org.elasticsearch.index.fielddata.NumericDoubleValues;
+import org.elasticsearch.index.fielddata.SortedNumericDoubleValues;
 import org.elasticsearch.search.DocValueFormat;
-import org.elasticsearch.search.MultiValueMode;
 import org.elasticsearch.search.aggregations.Aggregator;
 import org.elasticsearch.search.aggregations.AggregatorFactories;
 import org.elasticsearch.search.aggregations.BucketOrder;
@@ -53,9 +51,11 @@ import org.elasticsearch.search.aggregations.InternalOrder;
 import org.elasticsearch.search.aggregations.LeafBucketCollector;
 import org.elasticsearch.search.aggregations.LeafBucketCollectorBase;
 import org.elasticsearch.search.aggregations.bucket.BucketsAggregator;
+import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
 import org.elasticsearch.search.aggregations.pipeline.PipelineAggregator;
 import org.elasticsearch.search.aggregations.support.MultiValuesSource;
 import org.elasticsearch.search.aggregations.support.ValuesSource;
+import org.elasticsearch.search.aggregations.support.ValuesSourceConfig;
 import org.elasticsearch.search.internal.SearchContext;
 
 /**
@@ -84,11 +84,13 @@ public class ProportionalSumAggregator extends BucketsAggregator {
     private final Long start;
     private final Long end;
 
+    private final String[] fieldNames;
+
     ProportionalSumAggregator(String name, AggregatorFactories factories, Rounding rounding, long offset, BucketOrder order,
-                        boolean keyed,
-                        long minDocCount, @Nullable ExtendedBounds extendedBounds, @Nullable Map<String, ValuesSource.Numeric> valuesSources,
-                        DocValueFormat formatter, SearchContext aggregationContext, Aggregator parent, List<PipelineAggregator> pipelineAggregators,
-                        Map<String, Object> metaData, Long start, Long end) throws IOException {
+                              boolean keyed,
+                              long minDocCount, ExtendedBounds extendedBounds, Map<String, ValuesSourceConfig<ValuesSource.Numeric>> valuesSourceConfigs,
+                              DocValueFormat formatter, SearchContext aggregationContext, Aggregator parent, List<PipelineAggregator> pipelineAggregators,
+                              Map<String, Object> metaData, Long start, Long end, String[] fieldNames) throws IOException {
 
         super(name, factories, aggregationContext, parent, pipelineAggregators, metaData);
         this.rounding = rounding;
@@ -100,9 +102,10 @@ public class ProportionalSumAggregator extends BucketsAggregator {
         this.formatter = formatter;
         this.start = start != null ? start : Long.MIN_VALUE;
         this.end = end != null ? end : Long.MAX_VALUE;
+        this.fieldNames = fieldNames;
 
-        if (valuesSources != null && !valuesSources.isEmpty()) {
-            this.valuesSources = new MultiValuesSource.NumericMultiValuesSource(valuesSources, MultiValueMode.MIN);
+        if (valuesSourceConfigs != null && !valuesSourceConfigs.isEmpty()) {
+            this.valuesSources = new MultiValuesSource.NumericMultiValuesSource(valuesSourceConfigs, context.getQueryShardContext());
         } else {
             this.valuesSources = null;
         }
@@ -123,36 +126,29 @@ public class ProportionalSumAggregator extends BucketsAggregator {
             return LeafBucketCollector.NO_OP_COLLECTOR;
         }
         final BigArrays bigArrays = context.bigArrays();
-        final NumericDoubleValues[] values = new NumericDoubleValues[valuesSources.fieldNames().length];
-        for (int i = 0; i < values.length; ++i) {
-            values[i] = valuesSources.getField(i, ctx);
-        }
+        final OrderedValueReferences orderedValueReferences = new OrderedValueReferences(ctx, valuesSources, fieldNames);
+        final SortedNumericDoubleValues[] values = orderedValueReferences.getValuesArray();
 
         return new LeafBucketCollectorBase(sub, values) {
-            final long[] fieldVals = new long[valuesSources.fieldNames().length];
-
             @Override
             public void collect(int doc, long bucket) throws IOException {
                 assert bucket == 0;
-                if (fieldVals.length < 3 || fieldVals.length > 4) {
-                    throw new IllegalStateException("Invalid number of fields specified. Need 3 or 4, got " + fieldVals.length);
-                }
 
                 // start of the range
+                final SortedNumericDoubleValues rangeStartDoubleValues = orderedValueReferences.getRangeStarts();
                 long rangeStartVal = 0;
-                final NumericDoubleValues rangeStartDoubleValues = values[0];
                 if (rangeStartDoubleValues.advanceExact(doc)) {
-                    rangeStartVal = ((Double)rangeStartDoubleValues.doubleValue()).longValue();
+                    rangeStartVal = ((Double)rangeStartDoubleValues.nextValue()).longValue();
                 }
                 if (rangeStartVal < 0) {
                     throw new IllegalArgumentException("Invalid range start: " + rangeStartVal);
                 }
 
                 // end of the range
+                final SortedNumericDoubleValues rangeEndDoubleValues = orderedValueReferences.getRangeEnds();
                 long rangeEndVal = 0;
-                final NumericDoubleValues rangeEndDoubleValues = values[1];
                 if (rangeEndDoubleValues.advanceExact(doc)) {
-                    rangeEndVal = ((Double)rangeEndDoubleValues.doubleValue()).longValue();
+                    rangeEndVal = ((Double)rangeEndDoubleValues.nextValue()).longValue();
                 }
                 if (rangeEndVal < 0) {
                     throw new IllegalArgumentException("Invalid range end: " + rangeEndVal);
@@ -166,17 +162,20 @@ public class ProportionalSumAggregator extends BucketsAggregator {
                 final Long rangeDuration = rangeEndVal - rangeStartVal;
 
                 // the actual value
+                final SortedNumericDoubleValues valueDoubleValues = orderedValueReferences.getValues();
                 double valueVal = Double.NaN;
-                final NumericDoubleValues valueDoubleValues = values[2];
                 if (valueDoubleValues.advanceExact(doc)) {
-                    valueVal = valueDoubleValues.doubleValue();
+                    valueVal = valueDoubleValues.nextValue();
                 }
 
                 // scale value by sampling interval
-                if (values.length == 4) {
-                    final NumericDoubleValues samplingDoubleValues = values[3];
-                    if (samplingDoubleValues.advanceExact(doc) && Double.isFinite(samplingDoubleValues.doubleValue()) && samplingDoubleValues.doubleValue() != 0.0) {
-                        valueVal *= samplingDoubleValues.doubleValue();
+                final SortedNumericDoubleValues samplingDoubleValues = orderedValueReferences.getSamplings().orElse(null);
+                if (samplingDoubleValues != null) {
+                    if (samplingDoubleValues.advanceExact(doc)) {
+                        final Double samplingValue = samplingDoubleValues.nextValue();
+                        if (Double.isFinite(samplingValue) && samplingValue != 0.0) {
+                            valueVal *= samplingValue;
+                        }
                     }
                 }
 

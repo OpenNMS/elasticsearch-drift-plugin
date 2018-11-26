@@ -20,16 +20,16 @@ import java.util.List;
 
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.SearchPlugin;
-import org.elasticsearch.search.aggregations.bucket.histogram.InternalProportionalSumHistogram;
-import org.elasticsearch.search.aggregations.bucket.histogram.ProportionalSumAggregationBuilder;
-import org.elasticsearch.search.aggregations.bucket.histogram.ProportionalSumParser;
+import org.opennms.elasticsearch.plugin.aggregations.bucket.histogram.ProportionalSumAggregationBuilder;
+import org.opennms.elasticsearch.plugin.aggregations.bucket.histogram.InternalProportionalSumHistogram;
 
 public class DriftPlugin extends Plugin implements SearchPlugin {
 
     @Override
     public List<AggregationSpec> getAggregations() {
         return Collections.singletonList(new AggregationSpec(ProportionalSumAggregationBuilder.NAME,
-                        ProportionalSumAggregationBuilder::new, new ProportionalSumParser()).addResultReader(InternalProportionalSumHistogram::new));
+                ProportionalSumAggregationBuilder::new,
+                ProportionalSumAggregationBuilder::parse).addResultReader(InternalProportionalSumHistogram::new));
     }
 
 }
