@@ -4,7 +4,8 @@ Time series aggregation for flow records.
 
 |   Drift Plugin  | Elasticsearch     | Release date   |
 |-----------------|-------------------|:--------------:|
-| 1.0.0           | 6.2.4             |  May 16th 2018 |
+| 1.0.x           | 6.2.4             |  May 16th 2018 |
+| 1.1.0           | 6.5.4             |  Feb 2019      |
 
 ## Overview
 
