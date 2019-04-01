@@ -153,7 +153,7 @@ aggregations since we both create buckets and calculate a new metric.</descripti
                             <mapping>
                                 <directory>/usr/share/elasticsearch/plugins/drift</directory>
                                 <sources>
-                                    <source><location>target/releases/${project.name}-${project.version}/elasticsearch/</location></source>
+                                    <source><location>target/releases/${project.name}-${project.version}/</location></source>
                                 </sources>
                             </mapping>
                             <mapping>
@@ -234,7 +234,7 @@ aggregations since we both create buckets and calculate a new metric.</descripti
                             <outputDirectory>${basedir}/target/deb/usr/share/elasticsearch/plugins/drift/</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>target/releases/${project.name}-${project.version}/elasticsearch/</directory>
+                                    <directory>target/releases/${project.name}-${project.version}/</directory>
                                 </resource>
                             </resources>
                         </configuration>
