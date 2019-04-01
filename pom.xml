@@ -6,7 +6,7 @@
 
     <groupId>org.opennms.elasticsearch</groupId>
     <artifactId>elasticsearch-drift-plugin</artifactId>
-    <version>1.1.0-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
 
     <licenses>
         <license>
@@ -22,7 +22,7 @@
     </parent>
 
     <properties>
-        <elasticsearch.version>6.5.4</elasticsearch.version>
+        <elasticsearch.version>6.7.0</elasticsearch.version>
 	
 	<!-- We use the build timestamp in the RPM version, so change the format to ensure that there
 	     are no invalid characters such as colons (:) -->
