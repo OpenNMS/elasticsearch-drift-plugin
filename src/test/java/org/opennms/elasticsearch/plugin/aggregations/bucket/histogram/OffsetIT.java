@@ -52,8 +52,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import org.opennms.elasticsearch.plugin.DriftPlugin;
-import org.opennms.elasticsearch.plugin.aggregations.bucket.histogram.HistogramBucketWithValue;
-import org.opennms.elasticsearch.plugin.aggregations.bucket.histogram.ProportionalSumAggregationBuilder;
 
 @ESIntegTestCase.SuiteScopeTestCase
 public class OffsetIT extends ESIntegTestCase {
@@ -82,7 +80,7 @@ public class OffsetIT extends ESIntegTestCase {
     }
 
     private DateTime date(String date) {
-        return DateFieldMapper.DEFAULT_DATE_TIME_FORMATTER.parser().parseDateTime(date);
+        return DateFieldMapper.DEFAULT_DATE_TIME_FORMATTER.parseJoda(date);
     }
 
     private IndexRequestBuilder indexDoc(int hourOfDay, int minuteOfHour, int value) throws Exception {

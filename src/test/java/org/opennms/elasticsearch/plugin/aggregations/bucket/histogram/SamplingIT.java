@@ -52,7 +52,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import org.opennms.elasticsearch.plugin.DriftPlugin;
-import org.opennms.elasticsearch.plugin.aggregations.bucket.histogram.ProportionalSumAggregationBuilder;
 
 @ESIntegTestCase.SuiteScopeTestCase
 public class SamplingIT extends ESIntegTestCase {
@@ -83,7 +82,7 @@ public class SamplingIT extends ESIntegTestCase {
     }
 
     private DateTime date(String date) {
-        return DateFieldMapper.DEFAULT_DATE_TIME_FORMATTER.parser().parseDateTime(date);
+        return DateFieldMapper.DEFAULT_DATE_TIME_FORMATTER.parseJoda(date);
     }
 
     private IndexRequestBuilder indexDoc(int month, int day, int value, double interval) throws Exception {

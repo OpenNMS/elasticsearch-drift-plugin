@@ -22,10 +22,8 @@ package org.opennms.elasticsearch.plugin.aggregations.bucket.histogram;
 import static java.util.Collections.unmodifiableMap;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -74,7 +72,7 @@ import org.joda.time.DateTimeZone;
 public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregationBuilder<Numeric, ProportionalSumAggregationBuilder>
         implements MultiBucketAggregationBuilder {
     public static final String NAME = "proportional_sum";
-    private static DateMathParser EPOCH_MILLIS_PARSER = Joda.forPattern("epoch_millis", Locale.ROOT).toDateMathParser();
+    private static DateMathParser EPOCH_MILLIS_PARSER = Joda.forPattern("epoch_millis").toDateMathParser();
 
     private static ParseField START_FIELD = new ParseField("start");
     private static ParseField END_FIELD = new ParseField("end");
