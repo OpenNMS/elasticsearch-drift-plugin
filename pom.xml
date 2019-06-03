@@ -23,10 +23,11 @@
 
     <properties>
         <elasticsearch.version>6.7.0</elasticsearch.version>
-	
-	<!-- We use the build timestamp in the RPM version, so change the format to ensure that there
-	     are no invalid characters such as colons (:) -->
+
+        <!-- We use the build timestamp in the RPM version, so change the format to ensure that there
+             are no invalid characters such as colons (:) -->
         <maven.build.timestamp.format>yyyy_MM_dd_HH_mm</maven.build.timestamp.format>
+        <!-- Set to 0.${maven.build.timestamp}.SNAPSHOT when using a SNAPSHOT version to uniquely identify the RPMs -->
         <rpmRelease>0.${maven.build.timestamp}.SNAPSHOT</rpmRelease>
         <packageSummary>Time series aggregation for flow records in Elasticsearch</packageSummary>
     </properties>
@@ -97,13 +98,15 @@
                         <packageRevision>1</packageRevision>
                         <packageSection>contrib/net</packageSection>
                         <packageTitle>${packageSummary}</packageTitle>
-                        <packageDescription>This plugin provides a new aggregation function proportional_sum that can be used to
- group documents that contain a date range into multiple buckets, and calculate a sum
- on a per bucket basis using a ratio that is proportional to the range of time in which
- the document spent in that bucket.
- .
- This aggregation function behaves like a hybrid of both the Metrics and Bucket type
- aggregations since we both create buckets and calculate a new metric.</packageDescription>
+                        <packageDescription>This plugin provides a new aggregation function proportional_sum that can be
+                            used to
+                            group documents that contain a date range into multiple buckets, and calculate a sum
+                            on a per bucket basis using a ratio that is proportional to the range of time in which
+                            the document spent in that bucket.
+                            .
+                            This aggregation function behaves like a hybrid of both the Metrics and Bucket type
+                            aggregations since we both create buckets and calculate a new metric.
+                        </packageDescription>
                         <packageDependencies>
                             <packageDependency>elasticsearch (= ${elasticsearch.version})</packageDependency>
                         </packageDependencies>
@@ -117,7 +120,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>rpm-maven-plugin</artifactId>
-                    <version>2.1.5</version>
+                    <version>2.2.0</version>
                     <executions>
                         <execution>
                             <id>generate-rpm</id>
@@ -128,13 +131,15 @@
                     </executions>
                     <configuration>
                         <summary>${packageSummary}</summary>
-                        <description>This plugin provides a new aggregation function proportional_sum that can be used to
-group documents that contain a date range into multiple buckets, and calculate a sum
-on a per bucket basis using a ratio that is proportional to the range of time in which
-the document spent in that bucket.
+                        <description>This plugin provides a new aggregation function proportional_sum that can be used
+                            to
+                            group documents that contain a date range into multiple buckets, and calculate a sum
+                            on a per bucket basis using a ratio that is proportional to the range of time in which
+                            the document spent in that bucket.
 
-This aggregation function behaves like a hybrid of both the Metrics and Bucket type
-aggregations since we both create buckets and calculate a new metric.</description>
+                            This aggregation function behaves like a hybrid of both the Metrics and Bucket type
+                            aggregations since we both create buckets and calculate a new metric.
+                        </description>
                         <license>Apache License, Version 2.0</license>
                         <group>Applications/System</group>
                         <prefix>/usr/share/elasticsearch/plugins</prefix>
@@ -153,15 +158,21 @@ aggregations since we both create buckets and calculate a new metric.</descripti
                             <mapping>
                                 <directory>/usr/share/elasticsearch/plugins/drift</directory>
                                 <sources>
-                                    <source><location>target/releases/${project.name}-${project.version}/</location></source>
+                                    <source>
+                                        <location>target/releases/${project.name}-${project.version}/</location>
+                                    </source>
                                 </sources>
                             </mapping>
                             <mapping>
                                 <directory>/usr/share/doc/elasticsearch-drift-plugin</directory>
                                 <documentation>true</documentation>
                                 <sources>
-                                    <source><location>LICENSE.txt</location></source>
-                                    <source><location>README.md</location></source>
+                                    <source>
+                                        <location>LICENSE.txt</location>
+                                    </source>
+                                    <source>
+                                        <location>README.md</location>
+                                    </source>
                                 </sources>
                             </mapping>
                         </mappings>
@@ -173,7 +184,7 @@ aggregations since we both create buckets and calculate a new metric.</descripti
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.7.0</version>
+                <version>3.8.1</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
@@ -182,7 +193,7 @@ aggregations since we both create buckets and calculate a new metric.</descripti
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -194,7 +205,7 @@ aggregations since we both create buckets and calculate a new metric.</descripti
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.1.1</version>
                 <configuration>
                     <appendAssemblyId>false</appendAssemblyId>
                     <outputDirectory>${project.build.directory}/releases/</outputDirectory>
@@ -231,7 +242,8 @@ aggregations since we both create buckets and calculate a new metric.</descripti
                         </goals>
                         <configuration>
                             <overwrite>true</overwrite>
-                            <outputDirectory>${basedir}/target/deb/usr/share/elasticsearch/plugins/drift/</outputDirectory>
+                            <outputDirectory>${basedir}/target/deb/usr/share/elasticsearch/plugins/drift/
+                            </outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>target/releases/${project.name}-${project.version}/</directory>
@@ -264,7 +276,7 @@ aggregations since we both create buckets and calculate a new metric.</descripti
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.20.1</version>
+                <version>2.22.1</version>
                 <configuration>
                     <argLine>-Dtests.security.manager=false</argLine>
                     <excludes>
@@ -290,15 +302,15 @@ aggregations since we both create buckets and calculate a new metric.</descripti
                 </executions>
             </plugin>
             <plugin>
-              <groupId>org.sonatype.plugins</groupId>
-              <artifactId>nexus-staging-maven-plugin</artifactId>
-              <version>1.6.8</version>
-              <extensions>true</extensions>
-              <configuration>
-                <serverId>ossrh</serverId>
-                <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                <autoReleaseAfterClose>true</autoReleaseAfterClose>
-              </configuration>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -355,13 +367,47 @@ aggregations since we both create buckets and calculate a new metric.</descripti
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>gpg</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <distributionManagement>
-      <snapshotRepository>
-        <id>ossrh</id>
-        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-      </snapshotRepository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
     </distributionManagement>
 
 </project>

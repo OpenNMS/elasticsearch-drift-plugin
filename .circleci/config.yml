@@ -1,14 +1,24 @@
-version: 2
+version: 2.1
+
+executors:
+  build-executor:
+    docker:
+      - image: circleci/openjdk:8u212-jdk-stretch
+        environment:
+          MAVEN_OPTS: -Xmx2g
+  package-cloud-cli-executor:
+    docker:
+      - image: opennms/package-cloud-cli:0.3.05-b1
+  python-executor:
+    docker:
+      - image: circleci/python:3.7.2
+  github-executor:
+    docker:
+      - image: cibuilds/github:0.12
 
 jobs:
   build:
-    machine: true
-
-    working_directory: /home/circleci/drift
-
-    environment:
-      MAVEN_OPTS: -Xmx1024m
-
+    executor: build-executor
     steps:
       # Restore source cache
       - restore_cache:
@@ -28,96 +38,166 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "pom.xml" }}
+          - v2-dependencies-{{ checksum "pom.xml" }}
           # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+          - v2-dependencies-
 
-      - run: mvn dependency:resolve-plugins dependency:go-offline
+      - run:
+          name: Download Maven plugins and dependencies
+          command: mvn dependency:resolve-plugins dependency:go-offline
+
+      - run:
+          name: Install packaging dependencies
+          command: sudo apt-get update; sudo apt-get install rpm build-essential
+
+      - run:
+          name: Build and run the tests
+          command: |
+            mvn clean test integration-test
 
       - save_cache:
           paths:
             - ~/.m2
-          key: v1-dependencies-{{ checksum "pom.xml" }}
-
-      - run:
-          name: Install Packaging Dependencies
-          command: sudo apt-get update; sudo apt-get install rpm build-essential
-
-      - run:
-          name: Run the tests
-          command: |
-            mvn test integration-test
+          key: v2-dependencies-{{ checksum "pom.xml" }}
 
       - store_test_results:
           path: target/surefire-reports
 
-      - store_artifacts:
-          path: target/releases
+      - run:
+          name: Gather artifacts
+          command: |
+            mkdir -p target/artifacts
+            cp target/rpm/elasticsearch-drift-plugin/RPMS/noarch/*.rpm target/artifacts/
+            cp target/releases/*.zip target/artifacts/
+            cp target/releases/*.deb target/artifacts/
 
       - store_artifacts:
-          path: target/rpm/elasticsearch-drift-plugin/RPMS/noarch
+          path: target/artifacts
 
       - persist_to_workspace:
-          root: /home/circleci
+          root: ~/
           paths:
-            - drift
+            - project
 
-  deploy:
-    machine: true
-
-    working_directory: /home/circleci/drift
-
+  deploy-maven:
+    executor: build-executor
+    working_directory: ~/project
     steps:
       - attach_workspace:
-          at: /home/circleci
+          at: ~/
 
-      # Download and cache dependencies
+      # Download cached dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "pom.xml" }}
+          - v2-dependencies-{{ checksum "pom.xml" }}
           # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+          - v2-dependencies-
+
+      - run:
+          name: Prepare GPG keystore file
+          command: |
+            export GPG_KEY_FILE=`mktemp`
+            echo "export GPG_KEY=$GPG_KEY_FILE" >> $BASH_ENV
+
+      - run:
+          name: Base64 decode GPG keystore to file
+          command: echo $SIGNING_PGP_BASE64 | base64 --decode > $GPG_KEY
+
+      - run:
+          name: Import GPG keys
+          command: gpg --batch --import $GPG_KEY
 
       - run:
           name: Deploy the artifacts
           command: |
-            mvn -s .circleci.settings.xml -DskipTests deploy
+            mvn -s .circleci.settings.xml -Pgpg -DskipTests package deploy
 
-      - restore_cache:
-          keys:
-          - pip-cache-{{ checksum "pom.xml" }}
-          # fallback to using the latest cache if no exact match is found
-          - pip-cache-
-
+  deploy-package-snapshots:
+    executor: package-cloud-cli-executor
+    working_directory: ~/project
+    steps:
+      - attach_workspace:
+          at: ~/
       - run:
-          name: Install AWS client
+          name: Push RPM/Deb packages
           command: |
-            pip install awscli --upgrade --user
+            source .circleci/env/package_cloud_snapshots
+            package_cloud push ${PACKAGECLOUD_USER}/${PACKAGECLOUD_REPO}/${PACKAGECLOUD_RPM_DISTRO_VERSION} target/artifacts/*rpm
+            package_cloud push ${PACKAGECLOUD_USER}/${PACKAGECLOUD_REPO}/${PACKAGECLOUD_DEB_DISTRO_VERSION} target/artifacts/*.deb
 
-      - save_cache:
-          paths:
-            - ~/.cache/pip
-          key: pip-cache-{{ checksum "pom.xml" }}
-
+  deploy-package-release:
+    executor: package-cloud-cli-executor
+    working_directory: ~/project
+    steps:
+      - attach_workspace:
+          at: ~/
       - run:
-          name: Deploy the RPM to S3
+          name: Push RPM/Deb packages
           command: |
-            aws s3 sync target/rpm/elasticsearch-drift-plugin/RPMS/noarch/ s3://opennms-circleci-resources/elasticsearch-drift-plugin/
+            source .circleci/env/package_cloud_release
+            package_cloud push ${PACKAGECLOUD_USER}/${PACKAGECLOUD_REPO}/${PACKAGECLOUD_RPM_DISTRO_VERSION} target/artifacts/*rpm
+            package_cloud push ${PACKAGECLOUD_USER}/${PACKAGECLOUD_REPO}/${PACKAGECLOUD_DEB_DISTRO_VERSION} target/artifacts/*.deb
 
+  publish-github-release:
+    executor: github-executor
+    working_directory: ~/project
+    steps:
+      - attach_workspace:
+          at: ~/
       - run:
-          name: Deploy the Deb file to S3
+          name: Publish release on GitHub
           command: |
-            aws s3 sync --exclude '*' --include '*.deb' target/releases/ s3://opennms-circleci-resources/elasticsearch-drift-plugin/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ./target/artifacts/
+
+  yank-package-snapshots:
+    executor: python-executor
+    working_directory: ~/project
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Yank SNAPSHOT packages
+          command: |
+            source .circleci/env/package_cloud_snapshots
+            .circleci/scripts/packagecloud-yank-snapshot-packages.py
 
 workflows:
-  version: 2
   build-deploy:
     jobs:
       - build
-      - deploy:
+      - deploy-package-snapshots:
           requires:
             - build
           filters:
             branches:
               only:
-               - master
+               - /^es.*/
+      - yank-package-snapshots:
+          requires:
+            - deploy-package-snapshots
+      - deploy-package-release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+      - deploy-maven:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+               - /^es.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+      - publish-github-release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+

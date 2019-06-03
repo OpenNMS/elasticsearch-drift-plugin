@@ -52,3 +52,4 @@ html_docs
 /tmp/
 eclipse-build
 
+*.versionsBackup
