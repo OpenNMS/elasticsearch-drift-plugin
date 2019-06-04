@@ -164,7 +164,11 @@ jobs:
 workflows:
   build-deploy:
     jobs:
-      - build
+      # Run build jobs for all branches and any tag
+      - build:
+          filters:
+            tags:
+              only: /.*/
       - deploy-package-snapshots:
           requires:
             - build
