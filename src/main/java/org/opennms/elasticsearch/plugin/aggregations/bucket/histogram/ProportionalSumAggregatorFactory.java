@@ -29,11 +29,13 @@
 package org.opennms.elasticsearch.plugin.aggregations.bucket.histogram;
 
 import java.io.IOException;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
 import org.elasticsearch.common.joda.Joda;
 import org.elasticsearch.common.rounding.Rounding;
+import org.elasticsearch.index.mapper.DateFieldMapper;
 import org.elasticsearch.search.DocValueFormat;
 import org.elasticsearch.search.aggregations.Aggregator;
 import org.elasticsearch.search.aggregations.AggregatorFactories;
@@ -118,7 +120,7 @@ public class ProportionalSumAggregatorFactory extends MultiValuesSourceAggregato
         // entry in the buckets
         DocValueFormat effectiveFormat = format;
         if (format == null || format == DocValueFormat.RAW) {
-            effectiveFormat = new DocValueFormat.DateTime(Joda.getStrictStandardDateFormatter(), DateTimeZone.UTC);
+            effectiveFormat = new DocValueFormat.DateTime(Joda.getStrictStandardDateFormatter(), ZoneId.of("UTC"), DateFieldMapper.Resolution.MILLISECONDS);
         }
 
         return new ProportionalSumAggregator(name, factories, rounding, effectiveOffset, order, keyed, minDocCount, extendedBounds, configs,

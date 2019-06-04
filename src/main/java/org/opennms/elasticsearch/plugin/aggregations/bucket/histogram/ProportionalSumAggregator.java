@@ -53,7 +53,6 @@ import org.elasticsearch.search.aggregations.LeafBucketCollectorBase;
 import org.elasticsearch.search.aggregations.bucket.BucketsAggregator;
 import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
 import org.elasticsearch.search.aggregations.pipeline.PipelineAggregator;
-import org.elasticsearch.search.aggregations.support.MultiValuesSource;
 import org.elasticsearch.search.aggregations.support.ValuesSource;
 import org.elasticsearch.search.aggregations.support.ValuesSourceConfig;
 import org.elasticsearch.search.internal.SearchContext;
@@ -112,11 +111,6 @@ public class ProportionalSumAggregator extends BucketsAggregator {
 
         bucketOrds = new LongHash(1, aggregationContext.bigArrays());
         sums = context.bigArrays().newDoubleArray(1, true);
-    }
-
-    @Override
-    public boolean needsScores() {
-        return ((valuesSources != null) && valuesSources.needsScores()) || super.needsScores();
     }
 
     @Override

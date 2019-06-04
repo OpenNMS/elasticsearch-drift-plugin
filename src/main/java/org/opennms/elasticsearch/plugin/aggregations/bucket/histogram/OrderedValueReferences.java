@@ -33,7 +33,6 @@ import java.util.Optional;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.elasticsearch.index.fielddata.SortedNumericDoubleValues;
-import org.elasticsearch.search.aggregations.support.MultiValuesSource;
 
 public class OrderedValueReferences {
     private final SortedNumericDoubleValues[] valuesArray;
