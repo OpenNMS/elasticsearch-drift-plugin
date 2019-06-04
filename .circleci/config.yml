@@ -20,20 +20,7 @@ jobs:
   build:
     executor: build-executor
     steps:
-      # Restore source cache
-      - restore_cache:
-          keys:
-            - source-v1-{{ .Branch }}-{{ .Revision }}
-            - source-v1-{{ .Branch }}-
-            - source-v1-
-
       - checkout
-
-      # Save source cache
-      - save_cache:
-          key: source-v1-{{ .Branch }}-{{ .Revision }}
-          paths:
-            - ".git"
 
       # Download and cache dependencies
       - restore_cache:
