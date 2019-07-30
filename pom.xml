@@ -6,7 +6,7 @@
 
     <groupId>org.opennms.elasticsearch</groupId>
     <artifactId>elasticsearch-drift-plugin</artifactId>
-    <version>7.2.1-SNAPSHOT</version>
+    <version>7.2.1</version>
 
     <licenses>
         <license>
@@ -28,7 +28,7 @@
              are no invalid characters such as colons (:) -->
         <maven.build.timestamp.format>yyyy_MM_dd_HH_mm</maven.build.timestamp.format>
         <!-- Set to 0.${maven.build.timestamp}.SNAPSHOT when using a SNAPSHOT version to uniquely identify the RPMs -->
-	<rpmRelease>0.${maven.build.timestamp}.SNAPSHOT</rpmRelease>
+	<rpmRelease>1</rpmRelease>
         <packageSummary>Time series aggregation for flow records in Elasticsearch</packageSummary>
     </properties>
 
