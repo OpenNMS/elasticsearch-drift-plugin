@@ -42,7 +42,6 @@ import java.util.List;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.mapper.DateFieldMapper;
-import org.elasticsearch.painless.PainlessPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.aggregations.BucketOrder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
@@ -57,11 +56,11 @@ import org.opennms.elasticsearch.plugin.DriftPlugin;
 public class OffsetIT extends ESIntegTestCase {
 
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return Arrays.asList(DriftPlugin.class, PainlessPlugin.class);
+        return Arrays.asList(DriftPlugin.class);
     }
 
     protected Collection<Class<? extends Plugin>> transportClientPlugins() {
-        return Arrays.asList(DriftPlugin.class, PainlessPlugin.class);
+        return Arrays.asList(DriftPlugin.class);
     }
 
     @Override
