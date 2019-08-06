@@ -547,12 +547,15 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
     }
 
     @Override
-    protected int innerHashCode() {
-        return Objects.hash(order, keyed, minDocCount, interval, dateHistogramInterval, minDocCount, extendedBounds, start, end);
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), order, keyed, minDocCount, interval, dateHistogramInterval, minDocCount, extendedBounds, start, end);
     }
 
     @Override
-    protected boolean innerEquals(Object obj) {
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        if (super.equals(obj) == false) return false;
         ProportionalSumAggregationBuilder other = (ProportionalSumAggregationBuilder) obj;
         return Objects.equals(order, other.order)
                 && Objects.equals(keyed, other.keyed)

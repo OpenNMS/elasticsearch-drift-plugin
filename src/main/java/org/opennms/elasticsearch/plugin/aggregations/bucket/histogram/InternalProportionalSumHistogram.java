@@ -84,7 +84,7 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
             key = in.readLong();
             docCount = in.readVLong();
             value = in.readDouble();
-            aggregations = InternalAggregations.readAggregations(in);
+            aggregations = new InternalAggregations(in);
         }
 
         @Override
@@ -205,7 +205,7 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
 
         EmptyBucketInfo(StreamInput in) throws IOException {
             rounding = Rounding.Streams.read(in);
-            subAggregations = InternalAggregations.readAggregations(in);
+            subAggregations = new InternalAggregations(in);
             bounds = in.readOptionalWriteable(ExtendedBounds::new);
         }
 
@@ -535,7 +535,11 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
     }
 
     @Override
-    protected boolean doEquals(Object obj) {
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        if (super.equals(obj) == false) return false;
+
         InternalProportionalSumHistogram that = (InternalProportionalSumHistogram) obj;
         return Objects.equals(buckets, that.buckets)
                 && Objects.equals(order, that.order)
@@ -547,7 +551,7 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
     }
 
     @Override
-    protected int doHashCode() {
-        return Objects.hash(buckets, order, format, keyed, minDocCount, offset, emptyBucketInfo);
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), buckets, order, format, keyed, minDocCount, offset, emptyBucketInfo);
     }
 }
