@@ -485,13 +485,13 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
     }
 
     @Override
-    protected MultiValuesSourceAggregatorFactory<Numeric, ?> innerBuild(SearchContext context, Map<String, ValuesSourceConfig<Numeric>> configs,
+    protected MultiValuesSourceAggregatorFactory<Numeric> innerBuild(QueryShardContext queryShardContext, Map<String, ValuesSourceConfig<Numeric>> configs,
                                                                         DocValueFormat format,
-                                                                        AggregatorFactory<?> parent, Builder subFactoriesBuilder) throws IOException {
+                                                                        AggregatorFactory parent, Builder subFactoriesBuilder) throws IOException {
         // HACK: No timeZone() present in MultiValuesSourceAggregationBuilder, but it is present on the ValuesSourceAggregationBuilder
         final DateTimeZone tz = null; // timeZone();
         final Rounding rounding = createRounding(tz);
-        final DateTimeZone rewrittenTimeZone = rewriteTimeZone(context.getQueryShardContext());
+        final DateTimeZone rewrittenTimeZone = rewriteTimeZone(queryShardContext);
         final Rounding shardRounding;
         if (tz == rewrittenTimeZone) {
             shardRounding = rounding;
@@ -505,7 +505,7 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
             //roundedBounds = this.extendedBounds.parseAndValidate(name, context, format).round(rounding);
         }
         return new ProportionalSumAggregatorFactory(name, configs, offset, order, keyed, minDocCount,
-                rounding, shardRounding, roundedBounds, format, context, parent, subFactoriesBuilder, metaData, start, end, fieldNames);
+                rounding, shardRounding, roundedBounds, format, queryShardContext, parent, subFactoriesBuilder, metaData, start, end, fieldNames);
     }
 
     /** Return the interval as a date time unit if applicable. If this returns

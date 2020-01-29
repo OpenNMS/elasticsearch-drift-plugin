@@ -36,6 +36,7 @@ import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.bucket.histogram.HistogramFactory;
+import org.elasticsearch.search.aggregations.bucket.histogram.InternalDateHistogram;
 import org.elasticsearch.search.aggregations.pipeline.PipelineAggregator;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -321,6 +322,26 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
     @Override
     public Bucket createBucket(InternalAggregations aggregations, Bucket prototype) {
         return new Bucket(prototype.key, prototype.docCount, prototype.value, prototype.keyed, prototype.format, aggregations);
+    }
+
+    /**
+     * Reduce a list of same-keyed buckets (from multiple shards) to a single bucket. This
+     * requires all buckets to have the same key.
+     */
+    @Override
+    protected Bucket reduceBucket(List<Bucket> buckets, ReduceContext context) {
+        List<InternalAggregations> aggregations = new ArrayList<>(buckets.size());
+        long docCount = 0;
+        double value = 0;
+        for (Bucket bucket : buckets) {
+            docCount += bucket.docCount;
+            if (!Double.isNaN(bucket.value)) {
+                value += bucket.value;
+            }
+            aggregations.add((InternalAggregations) bucket.getAggregations());
+        }
+        InternalAggregations aggs = InternalAggregations.reduce(aggregations, context);
+        return new InternalProportionalSumHistogram.Bucket(buckets.get(0).key, docCount, value, keyed, format, aggs);
     }
 
     private static class IteratorAndCurrent {
