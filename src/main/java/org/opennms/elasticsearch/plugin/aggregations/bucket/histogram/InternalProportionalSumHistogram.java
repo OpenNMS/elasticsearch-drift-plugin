@@ -482,7 +482,7 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
     }
 
     @Override
-    public InternalAggregation doReduce(List<InternalAggregation> aggregations, ReduceContext reduceContext) {
+    public InternalAggregation reduce(List<InternalAggregation> aggregations, ReduceContext reduceContext) {
         List<Bucket> reducedBuckets = reduceBuckets(aggregations, reduceContext);
 
         // adding empty buckets if needed
