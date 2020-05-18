@@ -18,6 +18,15 @@
  */
 package org.opennms.elasticsearch.plugin.aggregations.bucket.histogram;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Objects;
+
 import org.apache.lucene.util.CollectionUtil;
 import org.apache.lucene.util.PriorityQueue;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -36,19 +45,9 @@ import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.bucket.histogram.HistogramFactory;
-import org.elasticsearch.search.aggregations.bucket.histogram.InternalDateHistogram;
 import org.elasticsearch.search.aggregations.pipeline.PipelineAggregator;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * Copy of {@link org.elasticsearch.search.aggregations.bucket.histogram.InternalDateHistogram} with the addition
@@ -501,7 +500,7 @@ public final class InternalProportionalSumHistogram extends InternalMultiBucketA
             reducedBuckets = reverse;
         } else {
             // sorted by compound order or sub-aggregation, need to fall back to a costly n*log(n) sort
-            CollectionUtil.introSort(reducedBuckets, order.comparator(null));
+            CollectionUtil.introSort(reducedBuckets, order.comparator());
         }
 
         return new InternalProportionalSumHistogram(getName(), reducedBuckets, order, minDocCount, offset, emptyBucketInfo,

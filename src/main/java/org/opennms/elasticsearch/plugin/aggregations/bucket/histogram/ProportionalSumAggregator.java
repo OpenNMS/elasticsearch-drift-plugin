@@ -94,7 +94,7 @@ public class ProportionalSumAggregator extends BucketsAggregator {
         super(name, factories, aggregationContext, parent, pipelineAggregators, metaData);
         this.rounding = rounding;
         this.offset = offset;
-        this.order = InternalOrder.validate(order, this);
+        this.order = order;
         this.keyed = keyed;
         this.minDocCount = minDocCount;
         this.extendedBounds = extendedBounds;
@@ -231,7 +231,7 @@ public class ProportionalSumAggregator extends BucketsAggregator {
         }
 
         // the contract of the histogram aggregation is that shards must return buckets ordered by key in ascending order
-        CollectionUtil.introSort(buckets, BucketOrder.key(true).comparator(this));
+        CollectionUtil.introSort(buckets, BucketOrder.key(true).comparator());
 
         // value source will be null for unmapped fields
         InternalProportionalSumHistogram.EmptyBucketInfo emptyBucketInfo = minDocCount == 0
