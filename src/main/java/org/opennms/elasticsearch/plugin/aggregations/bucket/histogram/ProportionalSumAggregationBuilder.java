@@ -413,7 +413,7 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
             builder.field(ProportionalSumAggregationBuilder.START_FIELD.getPreferredName(), start);
         }
         if (end != null) {
-            builder.field(ProportionalSumAggregationBuilder.END_FIELD.getPreferredName(), start);
+            builder.field(ProportionalSumAggregationBuilder.END_FIELD.getPreferredName(), end);
         }
 
         return builder;
