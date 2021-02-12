@@ -6,7 +6,13 @@
 
     <groupId>org.opennms.elasticsearch</groupId>
     <artifactId>elasticsearch-drift-plugin</artifactId>
-    <version>7.6.2-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>es-7.6.2</module>
+        <module>es-7.10.2</module>
+    </modules>
 
     <licenses>
         <license>
@@ -22,7 +28,6 @@
     </parent>
 
     <properties>
-        <elasticsearch.version>7.6.2</elasticsearch.version>
 
         <!-- We use the build timestamp in the RPM version, so change the format to ensure that there
              are no invalid characters such as colons (:) -->
@@ -31,39 +36,6 @@
         <rpmRelease>0.${maven.build.timestamp}.SNAPSHOT</rpmRelease>
         <packageSummary>Time series aggregation for flow records in Elasticsearch</packageSummary>
     </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-            <version>${elasticsearch.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch.plugin</groupId>
-            <artifactId>aggs-matrix-stats-client</artifactId>
-            <version>${elasticsearch.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch.test</groupId>
-            <artifactId>framework</artifactId>
-            <version>${elasticsearch.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>2.10.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>2.10.0</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
 
     <build>
         <resources>
