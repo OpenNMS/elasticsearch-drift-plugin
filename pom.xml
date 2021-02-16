@@ -135,10 +135,10 @@
                                 <documentation>true</documentation>
                                 <sources>
                                     <source>
-                                        <location>LICENSE.txt</location>
+                                        <location>${maven.multiModuleProjectDirectory}/LICENSE.txt</location>
                                     </source>
                                     <source>
-                                        <location>README.md</location>
+                                        <location>${maven.multiModuleProjectDirectory}/README.md</location>
                                     </source>
                                 </sources>
                             </mapping>
@@ -229,7 +229,7 @@
                             <outputDirectory>${basedir}/target/deb/usr/share/doc/${project.name}/</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${basedir}</directory>
+                                    <directory>${maven.multiModuleProjectDirectory}</directory>
                                     <includes>
                                         <include>LICENSE.txt</include>
                                         <include>README.md</include>
