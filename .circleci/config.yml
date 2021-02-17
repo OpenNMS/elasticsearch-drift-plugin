@@ -49,9 +49,10 @@ jobs:
 
       - run:
           name: Gather test results
+          when: always # test results must be copied even on failure
           command: |
             mkdir -p target/test-results
-            for d in es-*; do cp -r "$d/target/surefire-reports" "target/test-results/$d-surefire-reports"; done
+            for d in es-*/target/surefire-reports; do cp -r "$d" "target/test-results/${d/\/target\//-}"; done
 
       - store_test_results:
           path: target/test-results
