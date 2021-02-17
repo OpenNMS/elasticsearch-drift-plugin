@@ -47,16 +47,22 @@ jobs:
             - ~/.m2
           key: v2-dependencies-{{ checksum "pom.xml" }}
 
+      - run:
+          name: Gather test results
+          command: |
+            mkdir -p target/test-results
+            for d in es-*; do cp -r "$d/target/surefire-reports" "test-results/$d-surefire-reports"; done
+
       - store_test_results:
-          path: target/surefire-reports
+          path: target/test-results
 
       - run:
           name: Gather artifacts
           command: |
             mkdir -p target/artifacts
-            cp target/rpm/elasticsearch-drift-plugin/RPMS/noarch/*.rpm target/artifacts/
-            cp target/releases/*.zip target/artifacts/
-            cp target/releases/*.deb target/artifacts/
+            cp es-*/target/rpm/elasticsearch-drift-plugin/RPMS/noarch/*.rpm target/artifacts/
+            cp es-*/target/releases/*.zip target/artifacts/
+            cp es-*/cirtarget/releases/*.deb target/artifacts/
 
       - store_artifacts:
           path: target/artifacts
