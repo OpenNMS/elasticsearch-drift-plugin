@@ -32,8 +32,6 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.test.StreamsUtils.copyToBytesFromClasspath;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertSearchResponse;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -42,23 +40,17 @@ import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
+import org.elasticsearch.search.aggregations.bucket.histogram.HistogramAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.SumAggregationBuilder;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.junit.Test;
-import org.opennms.elasticsearch.plugin.DriftPlugin;
-import org.opennms.elasticsearch.plugin.aggregations.bucket.histogram.FlowHistogramAggregationBuilder;
 
 @ESIntegTestCase.SuiteScopeTestCase
-public class FlowSumIT extends ESIntegTestCase {
+public class SumIT extends ESIntegTestCase {
 
     private static final String IDX = "idx";
     private static final String TYPE = "mytype";
-
-    @Override
-    protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return Arrays.asList(DriftPlugin.class);
-    }
 
     @Override
     public void setupSuiteScopeCluster() throws Exception {
@@ -66,12 +58,13 @@ public class FlowSumIT extends ESIntegTestCase {
         byte[] template = copyToBytesFromClasspath("/range.template.json");
 
         client().admin().indices()
-                .preparePutTemplate("range_template")
+                .preparePutTemplate("range_index_template")
                 .setSource(template, XContentType.JSON).get();
 
         createIndex(IDX);
+
         List<IndexRequestBuilder> builders = Stream
-                .of(doc(2, 5, 4), doc(6, 12, 70), doc(10, 15, 600))
+                .of(doc(2, 5, 1), doc(6, 12, 10), doc(10, 15, 100))
                 .map(d -> indexDoc(d))
                 .collect(Collectors.toList());
         indexRandom(true, builders);
@@ -89,8 +82,6 @@ public class FlowSumIT extends ESIntegTestCase {
                 .field("gte", gte)
                 .field("lte", lte)
                 .endObject()
-                .field("start", gte)
-                .field("end", lte)
                 .field("value", value)
                 .endObject();
     }
@@ -100,14 +91,12 @@ public class FlowSumIT extends ESIntegTestCase {
         SearchResponse response = client().prepareSearch(IDX)
                 .setSize(0)
                 .addAggregation(
-                        new FlowHistogramAggregationBuilder("histo")
+                        new HistogramAggregationBuilder("histo")
                         .interval(5)
                         .field("range")
                         .subAggregation(
-                                new FlowSumAggregationBuilder("sum")
+                                new SumAggregationBuilder("sum")
                                 .field("value")
-                                .start("start")
-                                .end("end")
                         )
                 )
                 .get();
@@ -118,5 +107,6 @@ public class FlowSumIT extends ESIntegTestCase {
 
         System.out.println("histo: " + histo);
     }
+
 
 }

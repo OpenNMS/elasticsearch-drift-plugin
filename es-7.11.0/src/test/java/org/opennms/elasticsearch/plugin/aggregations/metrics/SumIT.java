@@ -52,14 +52,6 @@ public class SumIT extends ESIntegTestCase {
     private static final String IDX = "idx";
     private static final String TYPE = "mytype";
 
-    protected int numberOfShards() {
-        return 2;
-    }
-
-    protected int numberOfReplicas() {
-        return 1;
-    }
-
     @Override
     public void setupSuiteScopeCluster() throws Exception {
 
