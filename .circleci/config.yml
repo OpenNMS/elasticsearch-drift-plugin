@@ -51,7 +51,7 @@ jobs:
           name: Gather test results
           command: |
             mkdir -p target/test-results
-            for d in es-*; do cp -r "$d/target/surefire-reports" "test-results/$d-surefire-reports"; done
+            for d in es-*; do cp -r "$d/target/surefire-reports" "target/test-results/$d-surefire-reports"; done
 
       - store_test_results:
           path: target/test-results
