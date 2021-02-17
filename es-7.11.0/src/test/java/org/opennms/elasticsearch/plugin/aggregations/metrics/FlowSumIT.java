@@ -83,7 +83,7 @@ public class FlowSumIT extends ESIntegTestCase {
                 .map(d -> indexDoc(d))
                 .collect(Collectors.toList());
         indexRandom(true, builders);
-        ensureSearchable();
+        ensureSearchable(IDX);
     }
 
     private IndexRequestBuilder indexDoc(XContentBuilder builder) {
