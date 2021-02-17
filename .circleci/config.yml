@@ -61,7 +61,7 @@ jobs:
           name: Gather artifacts
           command: |
             mkdir -p target/artifacts
-            find . -type f -regex '\./es-.*/target/rpm/elasticsearch-drift-plugin/RPMS/noarch/.*\.rpm' -exec cp {} target/artifacts/ \;
+            find . -type f -regex '\./es-.*/target/rpm/elasticsearch-drift-plugin-.*/RPMS/noarch/.*\.rpm' -exec cp {} target/artifacts/ \;
             find . -type f -regex '\./es-.*/target/releases/.*\.zip' -exec cp {} target/artifacts/ \;
             find . -type f -regex '\./es-.*/target/releases/.*\.deb' -exec cp {} target/artifacts/ \;
 
