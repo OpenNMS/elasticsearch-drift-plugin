@@ -28,7 +28,7 @@
     </parent>
 
     <properties>
-        <-- in CI the revision is extracted from tags -->
+        <!-- in CI the revision is extracted from tags -->
         <revision>0.0.1-SNAPSHOT</revision>
         <packageSummary>Time series aggregation for flow records in Elasticsearch</packageSummary>
     </properties>
