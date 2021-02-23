@@ -9,9 +9,9 @@ Maintain modules for every supported patch version of Elasticsearch i.e.:
 
 ## Releasing
 
-Tag the release and push.
+Versioning uses Maven's revision mechanism (cf. https://maven.apache.org/maven-ci-friendly.html).
 
-Tags names must have the form
+Tag the release and push. Tag names must have the form:
 
 ```
 v<major>.<minor>.<patch>_<es-modules>
