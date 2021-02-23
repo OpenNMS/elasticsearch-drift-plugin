@@ -132,6 +132,10 @@ jobs:
           command: |
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ./target/artifacts/
 
+orbs:
+  cloudsmith: cloudsmith/cloudsmith@1.0.3
+  sign-packages: opennms/sign-packages@2.2.0
+
 workflows:
   build-deploy:
     jobs:
