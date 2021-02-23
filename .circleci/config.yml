@@ -25,7 +25,7 @@ jobs:
       - run:
           name: Check version logic
           command: |
-            export U=${CIRCLE_TAG:+v${CIRCLE_SHA1}-SNAPSHOT}; export V=${U%%_*}; echo "V: $V"
+            if [[ "$CIRCLE_TAG" == "" ]]; then export V="v${CIRCLE_SHA1}-SNAPSHOT}; else export V=${CIRCLE_TAG%%_*}; fi; echo "V: $V"
 
       # Download and cache dependencies
       - restore_cache:
