@@ -22,6 +22,10 @@ jobs:
     steps:
       - checkout
 
+      - run:
+          name: Display Maven version
+          command: mvn -version
+
       # Download and cache dependencies
       - restore_cache:
           keys:
