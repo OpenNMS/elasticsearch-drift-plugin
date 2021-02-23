@@ -107,31 +107,19 @@ jobs:
           command: |
             V=${CIRCLE_TAG%%_*}; mvn -s .circleci.settings.xml -Pgpg -DskipTests -Drevision=${V:1} package deploy --projects ${CIRCLE_TAG#*_}
 
-  deploy-package-snapshots:
-    executor: package-cloud-cli-executor
-    working_directory: ~/project
+  deploy-packages:
+    executor: cloudsmith/default
+    resource_class: small
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          name: Push RPM/Deb packages
-          command: |
-            source .circleci/env/package_cloud_snapshots
-            package_cloud push ${PACKAGECLOUD_USER}/${PACKAGECLOUD_REPO}/${PACKAGECLOUD_RPM_DISTRO_VERSION} target/artifacts/*rpm
-            package_cloud push ${PACKAGECLOUD_USER}/${PACKAGECLOUD_REPO}/${PACKAGECLOUD_DEB_DISTRO_VERSION} target/artifacts/*.deb
 
-  deploy-package-release:
-    executor: package-cloud-cli-executor
-    working_directory: ~/project
-    steps:
-      - attach_workspace:
-          at: ~/
+      - cloudsmith/ensure-api-key
+      - cloudsmith/install-cli
+
       - run:
-          name: Push RPM/Deb packages
-          command: |
-            source .circleci/env/package_cloud_release
-            package_cloud push ${PACKAGECLOUD_USER}/${PACKAGECLOUD_REPO}/${PACKAGECLOUD_RPM_DISTRO_VERSION} target/artifacts/*rpm
-            package_cloud push ${PACKAGECLOUD_USER}/${PACKAGECLOUD_REPO}/${PACKAGECLOUD_DEB_DISTRO_VERSION} target/artifacts/*.deb
+          name: Push packages to CloudSmith
+          command: .circleci/scripts/publish-cloudsmith.sh
 
   publish-github-release:
     executor: github-executor
@@ -144,18 +132,6 @@ jobs:
           command: |
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ./target/artifacts/
 
-  yank-package-snapshots:
-    executor: python-executor
-    working_directory: ~/project
-    steps:
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: Yank SNAPSHOT packages
-          command: |
-            source .circleci/env/package_cloud_snapshots
-            .circleci/scripts/packagecloud-yank-snapshot-packages.py
-
 workflows:
   build-deploy:
     jobs:
@@ -167,24 +143,14 @@ workflows:
             tags:
               only: /.*/
       # deploy package snapshots for non-master branches only
-      - deploy-package-snapshots:
+      - deploy-packages:
           requires:
             - build
           filters:
             branches:
-              ignore: master
-      - yank-package-snapshots:
-          requires:
-            - deploy-package-snapshots
-      # deploy releases only for master branch and if tagged appropriately
-      - deploy-package-release:
-          requires:
-            - build
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /^v\d+\.\d+\.\d+_/
+              only:
+                - master
+                - jira/nms-13134
       - deploy-maven:
           requires:
             - build
