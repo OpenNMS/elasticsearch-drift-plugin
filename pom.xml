@@ -6,13 +6,12 @@
 
     <groupId>org.opennms.elasticsearch</groupId>
     <artifactId>elasticsearch-drift-plugin</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
 
     <modules>
         <module>es-7.6.2</module>
         <module>es-7.10.2</module>
-        <module>es-7.11.0</module>
     </modules>
 
     <licenses>
@@ -29,12 +28,6 @@
     </parent>
 
     <properties>
-
-        <!-- We use the build timestamp in the RPM version, so change the format to ensure that there
-             are no invalid characters such as colons (:) -->
-        <maven.build.timestamp.format>yyyy_MM_dd_HH_mm</maven.build.timestamp.format>
-        <!-- Set to 0.${maven.build.timestamp}.SNAPSHOT when using a SNAPSHOT version to uniquely identify the RPMs -->
-        <rpmRelease>0.${maven.build.timestamp}.SNAPSHOT</rpmRelease>
         <packageSummary>Time series aggregation for flow records in Elasticsearch</packageSummary>
     </properties>
 
@@ -114,7 +107,13 @@
                         <defaultFilemode>644</defaultFilemode>
                         <defaultUsername>root</defaultUsername>
                         <defaultGroupname>wheel</defaultGroupname>
-                        <release>${rpmRelease}</release>
+                        <!--
+                            rely on the default logic for the release parameter
+                            (cf. https://www.mojohaus.org/rpm-maven-plugin/ident-params.html#release)
+                            * If no modifier exists, the release will be 1.
+                            * If the modifier ends with SNAPSHOT, the timestamp (in UTC) of the build will be appended to end.
+                        -->
+<!--                        <release>1</release>-->
                         <defineStatements>
                             <!-- <defineStatement>_unpackaged_files_terminate_build 0</defineStatement> -->
                         </defineStatements>
@@ -278,6 +277,30 @@
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

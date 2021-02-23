@@ -6,12 +6,11 @@
 
     <groupId>org.opennms.elasticsearch</groupId>
     <artifactId>elasticsearch-drift-plugin-${elasticsearch.version}</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
 
     <parent>
         <groupId>org.opennms.elasticsearch</groupId>
         <artifactId>elasticsearch-drift-plugin</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <properties>

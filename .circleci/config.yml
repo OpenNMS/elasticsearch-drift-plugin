@@ -40,7 +40,7 @@ jobs:
       - run:
           name: Build and run the tests
           command: |
-            mvn clean test integration-test
+            U=${CIRCLE_TAG:+v${CIRCLE_SHA1}-SNAPSHOT}; V=${U%%_*}; mvn clean test integration-test -Drevision=${V:1} ${CIRCLE_TAG:+--projects ${CIRCLE_TAG#*_}}
 
       - save_cache:
           paths:
@@ -103,8 +103,9 @@ jobs:
 
       - run:
           name: Deploy the artifacts
+          # deploy-maven is called only if CIRCLE_TAG is set
           command: |
-            mvn -s .circleci.settings.xml -Pgpg -DskipTests package deploy
+            V=${CIRCLE_TAG%%_*}; mvn -s .circleci.settings.xml -Pgpg -DskipTests -Drevision=${V:1} package deploy --projects ${CIRCLE_TAG#*_}
 
   deploy-package-snapshots:
     executor: package-cloud-cli-executor
@@ -161,41 +162,43 @@ workflows:
       # Run build jobs for all branches and any tag
       - build:
           filters:
+            branches:
+              only: /.*/
             tags:
               only: /.*/
+      # deploy package snapshots for non-master branches only
       - deploy-package-snapshots:
           requires:
             - build
           filters:
             branches:
-              only:
-               - /^es.*/
+              ignore: master
       - yank-package-snapshots:
           requires:
             - deploy-package-snapshots
+      # deploy releases only for master branch and if tagged appropriately
       - deploy-package-release:
           requires:
             - build
           filters:
             branches:
-              ignore: /.*/
+              only: master
             tags:
-              only: /^v\d+\.\d+\.\d+$/
+              only: /^v\d+\.\d+\.\d+_/
       - deploy-maven:
           requires:
             - build
           filters:
             branches:
-              only:
-               - /^es.*/
+              only: master
             tags:
-              only: /^v\d+\.\d+\.\d+$/
+              only: /^v\d+\.\d+\.\d+_/
       - publish-github-release:
           requires:
             - build
           filters:
             branches:
-              ignore: /.*/
+              only: master
             tags:
-              only: /^v\d+\.\d+\.\d+$/
+              only: /^v\d+\.\d+\.\d+_/
 
