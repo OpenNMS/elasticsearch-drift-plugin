@@ -22,11 +22,6 @@ jobs:
     steps:
       - checkout
 
-      - run:
-          name: Check version logic
-          command: |
-            U=${CIRCLE_TAG:-v${CIRCLE_SHA1}-SNAPSHOT}; V=${U%%_*}; echo "V: $V"
-
       # Download and cache dependencies
       - restore_cache:
           keys:
@@ -45,7 +40,7 @@ jobs:
       - run:
           name: Build and run the tests
           command: |
-            U=${CIRCLE_TAG:-v${CIRCLE_SHA1}-SNAPSHOT}; V=${U%%_*}; mvn clean test integration-test -Drevision=${V:1} ${CIRCLE_TAG:+--projects ${CIRCLE_TAG#*_}}
+            U=${CIRCLE_TAG:-v0.0.1-SNAPSHOT}; V=${U%%_*}; mvn clean test integration-test -Drevision=${V:1} ${CIRCLE_TAG:+--projects ${CIRCLE_TAG#*_}}
 
       - save_cache:
           paths:
