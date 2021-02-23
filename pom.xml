@@ -30,6 +30,7 @@
     <properties>
         <!-- in CI the revision is extracted from tags -->
         <revision>0.0.1-SNAPSHOT</revision>
+        <debianPackageVersion>0.0.1</debianPackageVersion>
         <!-- We use the build timestamp in the package revision, so change the format to ensure that there
              are no invalid characters such as colons (:) -->
         <maven.build.timestamp.format>yyyy_MM_dd_HH_mm</maven.build.timestamp.format>
@@ -61,7 +62,7 @@
                     </executions>
                     <configuration>
                         <targetDir>${project.build.directory}/releases</targetDir>
-                        <packageVersion>${project.version}</packageVersion>
+                        <packageVersion>${debianPackageVersion}</packageVersion>
                         <packageRevision>${packageRevision}</packageRevision>
                         <packageSection>contrib/net</packageSection>
                         <packageTitle>${packageSummary}</packageTitle>

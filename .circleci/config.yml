@@ -40,7 +40,7 @@ jobs:
       - run:
           name: Build and run the tests
           command: |
-            U=${CIRCLE_TAG#v*}; V=${U%%_*}; mvn clean test integration-test ${V:+-Drevision $V} ${CIRCLE_TAG:+-DpackageRevision=1 --projects ${CIRCLE_TAG#*_}}
+            U=${CIRCLE_TAG#v*}; V=${U%%_*}; mvn clean test integration-test ${V:+-Drevision=$V -DdebianPackageVersion=$V -DpackageRevision=1 --projects ${CIRCLE_TAG#*_}}
 
       - save_cache:
           paths:
