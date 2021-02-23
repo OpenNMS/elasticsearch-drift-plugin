@@ -23,8 +23,8 @@ jobs:
       - checkout
 
       - run:
-          name: Display Maven version
-          command: mvn -version
+          name: Check version logic
+          command:  U=${CIRCLE_TAG:+v${CIRCLE_SHA1}-SNAPSHOT}; V=${U%%_*}; echo "V: $V"
 
       # Download and cache dependencies
       - restore_cache:
