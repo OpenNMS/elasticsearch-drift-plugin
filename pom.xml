@@ -30,6 +30,11 @@
     <properties>
         <!-- in CI the revision is extracted from tags -->
         <revision>0.0.1-SNAPSHOT</revision>
+        <!-- We use the build timestamp in the package revision, so change the format to ensure that there
+             are no invalid characters such as colons (:) -->
+        <maven.build.timestamp.format>yyyy_MM_dd_HH_mm</maven.build.timestamp.format>
+        <!-- Set to 0.${maven.build.timestamp}.SNAPSHOT when using a SNAPSHOT version to uniquely identify packages -->
+        <packageRevision>0.${maven.build.timestamp}.SNAPSHOT</packageRevision>
         <packageSummary>Time series aggregation for flow records in Elasticsearch</packageSummary>
     </properties>
 
@@ -57,7 +62,7 @@
                     <configuration>
                         <targetDir>${project.build.directory}/releases</targetDir>
                         <packageVersion>${project.version}</packageVersion>
-                        <packageRevision>1</packageRevision>
+                        <packageRevision>${packageRevision}</packageRevision>
                         <packageSection>contrib/net</packageSection>
                         <packageTitle>${packageSummary}</packageTitle>
                         <packageDescription>This plugin provides a new aggregation function proportional_sum that can be
@@ -109,13 +114,7 @@
                         <defaultFilemode>644</defaultFilemode>
                         <defaultUsername>root</defaultUsername>
                         <defaultGroupname>wheel</defaultGroupname>
-                        <!--
-                            rely on the default logic for the release parameter
-                            (cf. https://www.mojohaus.org/rpm-maven-plugin/ident-params.html#release)
-                            * If no modifier exists, the release will be 1.
-                            * If the modifier ends with SNAPSHOT, the timestamp (in UTC) of the build will be appended to end.
-                        -->
-<!--                        <release>1</release>-->
+                        <release>${packageRevision}</release>
                         <defineStatements>
                             <!-- <defineStatement>_unpackaged_files_terminate_build 0</defineStatement> -->
                         </defineStatements>
