@@ -48,9 +48,9 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <groupId>com.github.fracpete</groupId>
+                    <groupId>net.sf.debian-maven</groupId>
                     <artifactId>debian-maven-plugin</artifactId>
-                    <version>1.0.20</version>
+                    <version>1.0.6</version>
                     <executions>
                         <execution>
                             <id>generate-deb</id>
