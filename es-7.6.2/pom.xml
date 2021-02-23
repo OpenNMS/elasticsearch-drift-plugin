@@ -104,7 +104,7 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>net.sf.debian-maven</groupId>
+                        <groupId>com.github.fracpete</groupId>
                         <artifactId>debian-maven-plugin</artifactId>
                     </plugin>
                 </plugins>
