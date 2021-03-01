@@ -63,7 +63,7 @@ jobs:
           name: Gather artifacts
           command: |
             mkdir -p target/artifacts
-            find . -type f -regex '\./es-.*/target/releases/.*\.(deb|rpm|zip)' -exec cp {} target/artifacts/ \;
+            find . -type f -regex '\./es-.*/target/releases/.*\.\(deb\|rpm\|zip\)' -exec cp {} target/artifacts/ \;
 
       - store_artifacts:
           path: target/artifacts
