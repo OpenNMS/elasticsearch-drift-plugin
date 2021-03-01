@@ -29,14 +29,20 @@
 
     <properties>
         <!-- in CI the revision is extracted from tags -->
-        <revision>0.0.1-SNAPSHOT</revision>
-        <debianPackageVersion>0.0.1</debianPackageVersion>
+        <revision>1.3.0-SNAPSHOT</revision>
         <!-- We use the build timestamp in the package revision, so change the format to ensure that there
              are no invalid characters such as colons (:) -->
-        <maven.build.timestamp.format>yyyy_MM_dd_HH_mm</maven.build.timestamp.format>
-        <!-- Set to 0.${maven.build.timestamp}.SNAPSHOT when using a SNAPSHOT version to uniquely identify packages -->
-        <packageRevision>0.${maven.build.timestamp}.SNAPSHOT</packageRevision>
-        <packageSummary>Time series aggregation for flow records in Elasticsearch</packageSummary>
+        <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
+        <!-- in CI the package revision is set to 1 if the commit is tagged -->
+        <packageRevision>${maven.build.timestamp}</packageRevision>
+        <packageDescription>This plugin provides a new aggregation function proportional_sum that can be used to
+            group documents that contain a date range into multiple buckets, and calculate a sum
+            on a per bucket basis using a ratio that is proportional to the range of time in which
+            the document spent in that bucket.
+            This aggregation function behaves like a hybrid of both the Metrics and Bucket type
+            aggregations since we both create buckets and calculate a new metric.
+        </packageDescription>
+
     </properties>
 
     <build>
@@ -49,125 +55,157 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <groupId>net.sf.debian-maven</groupId>
-                    <artifactId>debian-maven-plugin</artifactId>
-                    <version>1.0.6</version>
-                    <executions>
-                        <execution>
-                            <id>generate-deb</id>
-                            <goals>
-                                <goal>package</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <targetDir>${project.build.directory}/releases</targetDir>
-                        <packageVersion>${debianPackageVersion}</packageVersion>
-                        <packageRevision>${packageRevision}</packageRevision>
-                        <packageSection>contrib/net</packageSection>
-                        <packageTitle>${packageSummary}</packageTitle>
-                        <packageDescription>This plugin provides a new aggregation function proportional_sum that can be
-                            used to
-                            group documents that contain a date range into multiple buckets, and calculate a sum
-                            on a per bucket basis using a ratio that is proportional to the range of time in which
-                            the document spent in that bucket.
-                            .
-                            This aggregation function behaves like a hybrid of both the Metrics and Bucket type
-                            aggregations since we both create buckets and calculate a new metric.
-                        </packageDescription>
-                        <packageDependencies>
-                            <packageDependency>elasticsearch (= ${elasticsearch.version})</packageDependency>
-                        </packageDependencies>
-                        <maintainerName>Benjamin Reed</maintainerName>
-                        <maintainerEmail>ranger@opennms.org</maintainerEmail>
-                        <excludeAllArtifacts>true</excludeAllArtifacts>
-                        <excludeAllDependencies>true</excludeAllDependencies>
-                        <includeAttachedArtifacts>false</includeAttachedArtifacts>
-                    </configuration>
-                </plugin>
-                <plugin>
                     <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>rpm-maven-plugin</artifactId>
-                    <version>2.2.0</version>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>3.0.0</version>
                     <executions>
                         <execution>
-                            <id>generate-rpm</id>
+                            <id>rpm</id>
+                            <phase>package</phase>
                             <goals>
-                                <goal>rpm</goal>
+                                <goal>exec</goal>
                             </goals>
+                            <configuration>
+                                <executable>fpm</executable>
+                                <arguments>
+                                    <argument>-t</argument>
+                                    <argument>rpm</argument>
+                                    <argument>--name</argument>
+                                    <argument>${project.artifactId}</argument>
+                                    <argument>--description</argument>
+                                    <argument>${packageDescription}</argument>
+                                    <argument>--vendor</argument>
+                                    <argument>OpenNMS</argument>
+                                    <argument>--license</argument>
+                                    <argument>Apache-2.0</argument>
+                                    <argument>--maintainer</argument>
+                                    <argument>opennms@opennms.org</argument>
+                                    <argument>--epoch</argument>
+                                    <argument>1</argument>
+                                    <argument>--version</argument>
+                                    <argument>${packageVersion}</argument>
+                                    <argument>--iteration</argument>
+                                    <argument>${packageRevision}</argument>
+                                    <argument>-s</argument>
+                                    <argument>dir</argument>
+                                    <argument>-C</argument>
+                                    <argument>${project.basedir}/target/package/${project.artifactId}-${project.version}</argument>
+                                    <argument>-d</argument>
+                                    <argument>elasticsearch = ${elasticsearch.version}</argument>
+                                    <argument>-a</argument>
+                                    <argument>noarch</argument>
+                                    <argument>-p</argument>
+                                    <argument>target/releases</argument>
+                                    <argument>--verbose</argument>
+                                </arguments>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>deb</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>exec</goal>
+                            </goals>
+                            <configuration>
+                                <executable>fpm</executable>
+                                <arguments>
+                                    <argument>-t</argument>
+                                    <argument>deb</argument>
+                                    <argument>--name</argument>
+                                    <argument>${project.artifactId}</argument>
+                                    <argument>--description</argument>
+                                    <argument>${packageDescription}</argument>
+                                    <argument>--vendor</argument>
+                                    <argument>OpenNMS</argument>
+                                    <argument>--license</argument>
+                                    <argument>Apache-2.0</argument>
+                                    <argument>--maintainer</argument>
+                                    <argument>opennms@opennms.org</argument>
+                                    <argument>--epoch</argument>
+                                    <argument>1</argument>
+                                    <argument>--version</argument>
+                                    <argument>${packageVersion}</argument>
+                                    <argument>--iteration</argument>
+                                    <argument>${packageRevision}</argument>
+                                    <argument>-s</argument>
+                                    <argument>dir</argument>
+                                    <argument>-C</argument>
+                                    <argument>${project.basedir}/target/package/${project.artifactId}-${project.version}</argument>
+                                    <argument>-d</argument>
+                                    <argument>elasticsearch = ${elasticsearch.version}</argument>
+                                    <argument>-a</argument>
+                                    <argument>noarch</argument>
+                                    <argument>-p</argument>
+                                    <argument>target/releases</argument>
+                                    <argument>--verbose</argument>
+                                </arguments>
+                            </configuration>
                         </execution>
                     </executions>
-                    <configuration>
-                        <summary>${packageSummary}</summary>
-                        <description>This plugin provides a new aggregation function proportional_sum that can be used
-                            to
-                            group documents that contain a date range into multiple buckets, and calculate a sum
-                            on a per bucket basis using a ratio that is proportional to the range of time in which
-                            the document spent in that bucket.
-
-                            This aggregation function behaves like a hybrid of both the Metrics and Bucket type
-                            aggregations since we both create buckets and calculate a new metric.
-                        </description>
-                        <license>Apache License, Version 2.0</license>
-                        <group>Applications/System</group>
-                        <prefix>/usr/share/elasticsearch/plugins</prefix>
-                        <defaultDirmode>755</defaultDirmode>
-                        <defaultFilemode>644</defaultFilemode>
-                        <defaultUsername>root</defaultUsername>
-                        <defaultGroupname>wheel</defaultGroupname>
-                        <release>${packageRevision}</release>
-                        <defineStatements>
-                            <!-- <defineStatement>_unpackaged_files_terminate_build 0</defineStatement> -->
-                        </defineStatements>
-                        <requires>
-                            <require>elasticsearch = ${elasticsearch.version}</require>
-                        </requires>
-                        <mappings>
-                            <mapping>
-                                <directory>/usr/share/elasticsearch/plugins/drift</directory>
-                                <sources>
-                                    <source>
-                                        <location>target/releases/${project.name}-${project.version}/</location>
-                                    </source>
-                                </sources>
-                            </mapping>
-                            <mapping>
-                                <directory>/usr/share/doc/elasticsearch-drift-plugin</directory>
-                                <documentation>true</documentation>
-                                <sources>
-                                    <source>
-                                        <location>${maven.multiModuleProjectDirectory}/LICENSE.txt</location>
-                                    </source>
-                                    <source>
-                                        <location>${maven.multiModuleProjectDirectory}/README.md</location>
-                                    </source>
-                                </sources>
-                            </mapping>
-                        </mappings>
-                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.1.1</version>
-                    <configuration>
-                        <appendAssemblyId>false</appendAssemblyId>
-                        <outputDirectory>${project.build.directory}/releases/</outputDirectory>
-                        <descriptors>
-                            <descriptor>${basedir}/src/main/assemblies/plugin.xml</descriptor>
-                        </descriptors>
-                    </configuration>
+                    <version>3.3.0</version>
                     <executions>
                         <execution>
+                            <id>zip</id>
                             <phase>package</phase>
                             <goals>
                                 <goal>single</goal>
                             </goals>
+                            <configuration>
+                                <appendAssemblyId>false</appendAssemblyId>
+                                <outputDirectory>${project.build.directory}/releases/</outputDirectory>
+                                <descriptors>
+                                    <descriptor>${basedir}/src/main/assemblies/plugin.xml</descriptor>
+                                </descriptors>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>package</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                            <configuration>
+                                <appendAssemblyId>false</appendAssemblyId>
+                                <outputDirectory>${project.build.directory}/package</outputDirectory>
+                                <descriptors>
+                                    <descriptor>${basedir}/src/main/assemblies/package.xml</descriptor>
+                                </descriptors>
+                            </configuration>
                         </execution>
                     </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>regex-property</id>
+                        <goals>
+                            <goal>regex-property</goal>
+                        </goals>
+                        <!--
+                            translate the minus sign in versions into a tilde
+                            -> tilde is special when rpm / deb package versions are compared
+                            -> tilde sorts before anything (including empty strings)
+                               cf. https://www.debian.org/doc/debian-policy/ch-controlfields.html#version
+                            -> released versions are bigger than their snapshots
+                         -->
+                        <configuration>
+                            <name>packageVersion</name>
+                            <value>${revision}</value>
+                            <regex>-</regex>
+                            <replacement>~</replacement>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -201,43 +239,6 @@
                         <goals>
                             <goal>resources</goal>
                         </goals>
-                    </execution>
-                    <execution>
-                        <id>copy-deb-resources</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <overwrite>true</overwrite>
-                            <outputDirectory>${basedir}/target/deb/usr/share/elasticsearch/plugins/drift/
-                            </outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>target/releases/${project.name}-${project.version}/</directory>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-deb-docs</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <overwrite>true</overwrite>
-                            <outputDirectory>${basedir}/target/deb/usr/share/doc/${project.name}/</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${maven.multiModuleProjectDirectory}</directory>
-                                    <includes>
-                                        <include>LICENSE.txt</include>
-                                        <include>README.md</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

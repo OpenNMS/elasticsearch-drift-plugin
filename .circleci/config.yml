@@ -35,12 +35,14 @@ jobs:
 
       - run:
           name: Install packaging dependencies
-          command: sudo apt-get update; sudo apt-get install rpm build-essential
+          command: |
+            sudo apt-get update; sudo apt-get install ruby ruby-dev rubygems build-essential
+            sudo gem install --no-document fpm
 
       - run:
           name: Build and run the tests
           command: |
-            U=${CIRCLE_TAG#v*}; V=${U%%_*}; mvn clean test integration-test ${V:+-Drevision=$V -DdebianPackageVersion=$V -DpackageRevision=1 --projects ${CIRCLE_TAG#*_}}
+            U=${CIRCLE_TAG#v*}; V=${U%%_*}; mvn clean test integration-test ${V:+-Drevision=$V -DpackageRevision=1 --projects ${CIRCLE_TAG#*_}}
 
       - save_cache:
           paths:
@@ -61,9 +63,7 @@ jobs:
           name: Gather artifacts
           command: |
             mkdir -p target/artifacts
-            find . -type f -regex '\./es-.*/target/rpm/elasticsearch-drift-plugin-.*/RPMS/noarch/.*\.rpm' -exec cp {} target/artifacts/ \;
-            find . -type f -regex '\./es-.*/target/releases/.*\.zip' -exec cp {} target/artifacts/ \;
-            find . -type f -regex '\./es-.*/target/releases/.*\.deb' -exec cp {} target/artifacts/ \;
+            find . -type f -regex '\./es-.*/target/releases/.*\.(deb|rpm|zip)' -exec cp {} target/artifacts/ \;
 
       - store_artifacts:
           path: target/artifacts
