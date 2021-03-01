@@ -36,7 +36,7 @@ jobs:
       - run:
           name: Install packaging dependencies
           command: |
-            sudo apt-get update; sudo apt-get install ruby ruby-dev rubygems build-essential
+            sudo apt-get update; sudo apt-get install rpm ruby ruby-dev rubygems build-essential
             sudo gem install --no-document fpm
 
       - run:
