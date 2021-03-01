@@ -154,7 +154,6 @@ workflows:
             branches:
               only:
                 - master
-                - jira/nms-13134
       - deploy-maven:
           requires:
             - build

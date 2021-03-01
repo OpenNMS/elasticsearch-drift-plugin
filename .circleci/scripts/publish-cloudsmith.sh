@@ -7,13 +7,10 @@ PROJECT="opennms"
 REPO=""
 
 if [ -n "${CIRCLE_TAG}" ]; then
-  REPO="stable"
+  REPO="common"
 else
   case "${CIRCLE_BRANCH}" in
     master)
-      REPO="develop"
-      ;;
-    jira/nms-13134)
       REPO="common-testing"
       ;;
     *)

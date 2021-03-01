@@ -35,6 +35,7 @@
         <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
         <!-- in CI the package revision is set to 1 if the commit is tagged -->
         <packageRevision>${maven.build.timestamp}</packageRevision>
+        <packageSummary>Time series aggregation for flow records in Elasticsearch</packageSummary>
         <packageDescription>This plugin provides a new aggregation function proportional_sum that can be used to
             group documents that contain a date range into multiple buckets, and calculate a sum
             on a per bucket basis using a ratio that is proportional to the range of time in which
@@ -76,6 +77,8 @@
                                     <argument>${packageDescription}</argument>
                                     <argument>--vendor</argument>
                                     <argument>OpenNMS</argument>
+                                    <argument>--url</argument>
+                                    <argument>https://www.opennms.org</argument>
                                     <argument>--license</argument>
                                     <argument>Apache-2.0</argument>
                                     <argument>--maintainer</argument>
@@ -97,6 +100,8 @@
                                     <argument>-p</argument>
                                     <argument>target/releases</argument>
                                     <argument>--verbose</argument>
+                                    <argument>--rpm-summary</argument>
+                                    <argument>${packageSummary}</argument>
                                 </arguments>
                             </configuration>
                         </execution>
@@ -117,6 +122,8 @@
                                     <argument>${packageDescription}</argument>
                                     <argument>--vendor</argument>
                                     <argument>OpenNMS</argument>
+                                    <argument>--url</argument>
+                                    <argument>https://www.opennms.org</argument>
                                     <argument>--license</argument>
                                     <argument>Apache-2.0</argument>
                                     <argument>--maintainer</argument>
