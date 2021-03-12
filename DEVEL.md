@@ -9,9 +9,9 @@ Maintain modules for every supported patch version of Elasticsearch i.e.:
 
 ## Releasing
 
-Versioning uses Maven's revision mechanism (cf. https://maven.apache.org/maven-ci-friendly.html).
+Versioning uses Maven's revision mechanism (cf. https://maven.apache.org/maven-ci-friendly.html). Tag the release and push. The CI pipeline automatically derives the corresponding version from the tag name.
 
-Tag the release and push. The CI pipeline automatically derives the corresponding version from the tag name. After a version was released increase the `revison` property in the parent pom to the next snapshot development version.
+After the plugin was released for a specific ES version the `revison` property in the parent pom needs **not** to be changed. There may come more ES versions for which the same plugin version will be released. Only if the functionality of the plugin is changed the `revision` property in the parent pom needs to be changed to the next snapshot version.
  
 Tag names must have the form:
 
@@ -22,7 +22,7 @@ v<major>.<minor>.<patch>_<es-modules>
 Where `es-modules` is a comma separated list of the modules that should be released. E.g. in order to release version `1.3.0` of the modules `es-7.6.2` and `es-7.10.2` the following tag has to be created:
 
 ```
-v1.3.0_es-7.6.2,es-7.10.2
+v1.0.0_es-7.6.2,es-7.10.2
 ```
 
 Tagging (and thereby releasing) can also be done for each module separately. 
