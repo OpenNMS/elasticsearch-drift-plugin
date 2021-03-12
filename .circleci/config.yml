@@ -159,7 +159,7 @@ workflows:
             - build
           filters:
             branches:
-              only: master
+              ignore: /.*/
             tags:
               only: /^v\d+\.\d+\.\d+_/
       - publish-github-release:
@@ -167,7 +167,7 @@ workflows:
             - build
           filters:
             branches:
-              only: master
+              ignore: /.*/
             tags:
               only: /^v\d+\.\d+\.\d+_/
 
