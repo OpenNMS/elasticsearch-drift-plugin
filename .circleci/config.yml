@@ -35,28 +35,35 @@ jobs:
 
       - run:
           name: Install packaging dependencies
-          command: sudo apt-get update; sudo apt-get install rpm build-essential
+          command: |
+            sudo apt-get update; sudo apt-get install rpm ruby ruby-dev rubygems build-essential
+            sudo gem install --no-document fpm
 
       - run:
           name: Build and run the tests
           command: |
-            mvn clean test integration-test
+            U=${CIRCLE_TAG#v*}; V=${U%%_*}; mvn clean test integration-test ${V:+-Drevision=$V -DpackageRevision=1 --projects ${CIRCLE_TAG#*_}}
 
       - save_cache:
           paths:
             - ~/.m2
           key: v2-dependencies-{{ checksum "pom.xml" }}
 
+      - run:
+          name: Gather test results
+          when: always # test results must be copied even on failure
+          command: |
+            mkdir -p target/test-results
+            for d in es-*/target/surefire-reports; do cp -r "$d" "target/test-results/${d/\/target\//-}"; done
+
       - store_test_results:
-          path: target/surefire-reports
+          path: target/test-results
 
       - run:
           name: Gather artifacts
           command: |
             mkdir -p target/artifacts
-            cp target/rpm/elasticsearch-drift-plugin/RPMS/noarch/*.rpm target/artifacts/
-            cp target/releases/*.zip target/artifacts/
-            cp target/releases/*.deb target/artifacts/
+            find . -type f -regex '\./es-.*/target/releases/.*\.\(deb\|rpm\|zip\)' -exec cp {} target/artifacts/ \;
 
       - store_artifacts:
           path: target/artifacts
@@ -96,34 +103,23 @@ jobs:
 
       - run:
           name: Deploy the artifacts
+          # deploy-maven is called only if CIRCLE_TAG is set
           command: |
-            mvn -s .circleci.settings.xml -Pgpg -DskipTests package deploy
+            V=${CIRCLE_TAG%%_*}; mvn -s .circleci.settings.xml -Pgpg -DskipTests -Drevision=${V:1} package deploy --projects ${CIRCLE_TAG#*_}
 
-  deploy-package-snapshots:
-    executor: package-cloud-cli-executor
-    working_directory: ~/project
+  deploy-packages:
+    executor: cloudsmith/default
+    resource_class: small
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          name: Push RPM/Deb packages
-          command: |
-            source .circleci/env/package_cloud_snapshots
-            package_cloud push ${PACKAGECLOUD_USER}/${PACKAGECLOUD_REPO}/${PACKAGECLOUD_RPM_DISTRO_VERSION} target/artifacts/*rpm
-            package_cloud push ${PACKAGECLOUD_USER}/${PACKAGECLOUD_REPO}/${PACKAGECLOUD_DEB_DISTRO_VERSION} target/artifacts/*.deb
 
-  deploy-package-release:
-    executor: package-cloud-cli-executor
-    working_directory: ~/project
-    steps:
-      - attach_workspace:
-          at: ~/
+      - cloudsmith/ensure-api-key
+      - cloudsmith/install-cli
+
       - run:
-          name: Push RPM/Deb packages
-          command: |
-            source .circleci/env/package_cloud_release
-            package_cloud push ${PACKAGECLOUD_USER}/${PACKAGECLOUD_REPO}/${PACKAGECLOUD_RPM_DISTRO_VERSION} target/artifacts/*rpm
-            package_cloud push ${PACKAGECLOUD_USER}/${PACKAGECLOUD_REPO}/${PACKAGECLOUD_DEB_DISTRO_VERSION} target/artifacts/*.deb
+          name: Push packages to CloudSmith
+          command: .circleci/scripts/publish-cloudsmith.sh
 
   publish-github-release:
     executor: github-executor
@@ -136,17 +132,9 @@ jobs:
           command: |
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ./target/artifacts/
 
-  yank-package-snapshots:
-    executor: python-executor
-    working_directory: ~/project
-    steps:
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: Yank SNAPSHOT packages
-          command: |
-            source .circleci/env/package_cloud_snapshots
-            .circleci/scripts/packagecloud-yank-snapshot-packages.py
+orbs:
+  cloudsmith: cloudsmith/cloudsmith@1.0.3
+  sign-packages: opennms/sign-packages@2.2.0
 
 workflows:
   build-deploy:
@@ -154,41 +142,32 @@ workflows:
       # Run build jobs for all branches and any tag
       - build:
           filters:
+            branches:
+              only: /.*/
             tags:
               only: /.*/
-      - deploy-package-snapshots:
+      # deploy package snapshots for non-master branches only
+      - deploy-packages:
           requires:
             - build
           filters:
             branches:
               only:
-               - /^es.*/
-      - yank-package-snapshots:
-          requires:
-            - deploy-package-snapshots
-      - deploy-package-release:
-          requires:
-            - build
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v\d+\.\d+\.\d+$/
+                - master
       - deploy-maven:
           requires:
             - build
           filters:
             branches:
-              only:
-               - /^es.*/
+              only: master
             tags:
-              only: /^v\d+\.\d+\.\d+$/
+              only: /^v\d+\.\d+\.\d+_/
       - publish-github-release:
           requires:
             - build
           filters:
             branches:
-              ignore: /.*/
+              only: master
             tags:
-              only: /^v\d+\.\d+\.\d+$/
+              only: /^v\d+\.\d+\.\d+_/
 

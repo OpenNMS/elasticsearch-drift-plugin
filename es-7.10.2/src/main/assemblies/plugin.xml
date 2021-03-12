@@ -21,6 +21,7 @@
     </dependencySets>
     <fileSets>
       <fileSet>
+        <directory>${maven.multiModuleProjectDirectory}</directory>
         <outputDirectory>/</outputDirectory>
         <includes>
           <include>LICENSE.txt</include>

@@ -1,26 +1,33 @@
 # Development Notes
 
-## Branches
+## Modules
 
-Maintain branches for every supported minor version of Elasticsearch i.e.:
-* es-6.5.x
-* es-6.6.x
-* es-6.7.x
+Maintain modules for every supported patch version of Elasticsearch i.e.:
+* es-7.6.2
+* es-7.10.2
 
-Versions in the pom.xml for these branches should be 6.5.Y-SNAPSHOT, where Y is the last patch release for which the plugin was built.
 
 ## Releasing
 
-When releasing, change version to match Elasticsearch version i.e.:
+Versioning uses Maven's revision mechanism (cf. https://maven.apache.org/maven-ci-friendly.html). Tag the release and push. The CI pipeline automatically derives the corresponding version from the tag name.
+
+After the plugin was released for a specific ES version the `revison` property in the parent pom needs **not** to be changed. There may come more ES versions for which the same plugin version will be released. Only if the functionality of the plugin is changed the `revision` property in the parent pom needs to be changed to the next snapshot version.
+ 
+Tag names must have the form:
+
 ```
-mvn versions:set -DnewVersion=6.5.2
+v<major>.<minor>.<patch>_<es-modules>
 ```
 
-Then update the `rpmRelease` property to be `1`.
+Where `es-modules` is a comma separated list of the modules that should be released. E.g. in order to release version `1.3.0` of the modules `es-7.6.2` and `es-7.10.2` the following tag has to be created:
 
-Tag the release and push.
+```
+v1.0.0_es-7.6.2,es-7.10.2
+```
 
-The build pipeline with automatically publish the artifacts to GitHub, Maven Central and Packagecloud.
+Tagging (and thereby releasing) can also be done for each module separately. 
+
+The build pipeline automatically publishes the artifacts to GitHub, Maven Central and Cloudsmith.
 
 ## Misc.
 

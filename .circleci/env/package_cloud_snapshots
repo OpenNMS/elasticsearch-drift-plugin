@@ -1,7 +1,0 @@
-#!/bin/bash
-# Package Cloud configuration
-
-PACKAGECLOUD_USER="opennms"
-PACKAGECLOUD_REPO="plugin-snapshot"
-PACKAGECLOUD_RPM_DISTRO_VERSION="el/7"
-PACKAGECLOUD_DEB_DISTRO_VERSION="debian/stretch"

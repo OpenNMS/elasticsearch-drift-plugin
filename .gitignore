@@ -53,3 +53,4 @@ html_docs
 eclipse-build
 
 *.versionsBackup
+.flattened-pom.xml
