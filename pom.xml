@@ -12,6 +12,7 @@
     <modules>
         <module>es-7.6.2</module>
         <module>es-7.10.2</module>
+        <module>es-7.16.2</module>
     </modules>
 
     <licenses>
