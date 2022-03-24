@@ -3,7 +3,7 @@ version: 2.1
 executors:
   build-executor:
     docker:
-      - image: circleci/openjdk:8u212-jdk-stretch
+      - image: cimg/openjdk:8.0
         environment:
           MAVEN_OPTS: -Xmx2g
   package-cloud-cli-executor:
@@ -11,10 +11,10 @@ executors:
       - image: opennms/package-cloud-cli:0.3.05-b1
   python-executor:
     docker:
-      - image: circleci/python:3.7.2
+      - image: cimg/python:3.9
   github-executor:
     docker:
-      - image: cibuilds/github:0.12
+      - image: cibuilds/github:0.13
 
 jobs:
   build:
@@ -140,12 +140,7 @@ workflows:
   build-deploy:
     jobs:
       # Run build jobs for all branches and any tag
-      - build:
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              only: /.*/
+      - build
       # deploy package snapshots for non-master branches only
       - deploy-packages:
           requires:
@@ -161,7 +156,7 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /^v\d+\.\d+\.\d+_/
+              only: /^v\d+\.\d+\.\d+_.*/
       - publish-github-release:
           requires:
             - build
@@ -169,5 +164,5 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /^v\d+\.\d+\.\d+_/
+              only: /^v\d+\.\d+\.\d+_.*/
 
