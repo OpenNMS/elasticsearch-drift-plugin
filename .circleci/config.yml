@@ -16,6 +16,13 @@ executors:
     docker:
       - image: cibuilds/github:0.13
 
+only-tags: &only-tags
+  filters:
+    tags:
+      only: /^v\d+\.\d+\.\d+_.*/
+    branches:
+      ignore: /.*/
+
 jobs:
   build:
     executor: build-executor
@@ -150,6 +157,7 @@ workflows:
               only:
                 - master
       - deploy-maven:
+          <<: *only-tags
           requires:
             - build
           filters:
@@ -158,11 +166,6 @@ workflows:
             tags:
               only: /^v\d+\.\d+\.\d+_.*/
       - publish-github-release:
+          <<: *only-tags
           requires:
             - build
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v\d+\.\d+\.\d+_.*/
-
