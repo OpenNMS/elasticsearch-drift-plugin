@@ -137,6 +137,7 @@ orbs:
   sign-packages: opennms/sign-packages@2.2.0
 
 workflows:
+  version: 2
   build-deploy:
     jobs:
       # Run build jobs for all branches and any tag
