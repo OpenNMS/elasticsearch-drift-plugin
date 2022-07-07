@@ -4,10 +4,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>9</version>
+    </parent>
+
     <groupId>org.opennms.elasticsearch</groupId>
     <artifactId>elasticsearch-drift-plugin</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
+
+    <name>Elasticsearch Drift Plugin</name>
+    <description>Aggregate function plugin for Elasticsearch</description>
 
     <modules>
         <module>es-7.6.2</module>
@@ -22,12 +31,51 @@
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
-
-    <parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>9</version>
-    </parent>
+    <issueManagement>
+      <system>Jira</system>
+      <url>http://issues.opennms.org/</url>
+    </issueManagement>
+    <ciManagement>
+      <system>CircleCI</system>
+      <url>https://app.circleci.com/pipelines/github/OpenNMS/elasticsearch-drift-plugin</url>
+    </ciManagement>
+    <developers>
+      <developer>
+        <id>cpape</id>
+        <name>Christian Pape</name>
+        <email>Christian.Pape@informatik.hs-fulda.de</email>
+      </developer>
+      <developer>
+        <id>fooker</id>
+        <name>Dustin Frisch</name>
+        <email>fooker@lab.sh</email>
+      </developer>
+      <developer>
+        <id>jwhite</id>
+        <name>Jesse White</name>
+        <email>jesse@opennms.org</email>
+      </developer>
+      <developer>
+        <id>naicisum</id>
+        <name>Sean</name>
+        <email>Naicisum@users.noreply.github.com</email>
+      </developer>
+      <developer>
+        <id>rangerrick</id>
+        <name>Benjamin Reed</name>
+        <email>ranger@opennms.org</email>
+      </developer>
+      <developer>
+        <id>swachter</id>
+        <name>Stefan Wachter</name>
+        <email>stefan.wachter@gmx.de</email>
+      </developer>
+    </developers>
+    <scm>
+      <connection>scm:git:https://github.com/OpenNMS/elasticsearch-drift-plugin.git</connection>
+      <developerConnection>scm:git:https://${user.name}@github.com/OpenNMS/elasticsearch-drift-plugin.git</developerConnection>
+      <url>https://github.com/OpenNMS/elasticsearch-drift-plugin</url>
+    </scm>
 
     <properties>
         <!-- in CI the revision is extracted from tags -->

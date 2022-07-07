@@ -6,6 +6,8 @@
 
     <groupId>org.opennms.elasticsearch</groupId>
     <artifactId>elasticsearch-drift-plugin-${elasticsearch.version}</artifactId>
+    <name>Drift Plugin for Elasticsearch ${elasticsearch.version}</name>
+    <description>Aggregate function plugin for Elasticsearch ${elasticsearch.version}</description>
 
     <parent>
         <groupId>org.opennms.elasticsearch</groupId>
