@@ -17,6 +17,7 @@
 
     <name>Elasticsearch Drift Plugin</name>
     <description>Aggregate function plugin for Elasticsearch</description>
+    <url>https://github.com/OpenNMS/elasticsearch-drift-plugin</url>
 
     <modules>
         <module>es-7.6.2</module>
@@ -342,7 +343,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.0.0</version>
+                <version>1.2.7</version>
                 <configuration>
                     <updatePomFile>true</updatePomFile>
                 </configuration>
@@ -353,6 +354,9 @@
                         <goals>
                             <goal>flatten</goal>
                         </goals>
+                        <configuration>
+                            <flattenMode>oss</flattenMode>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>flatten.clean</id>
