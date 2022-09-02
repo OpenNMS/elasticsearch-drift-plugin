@@ -25,6 +25,7 @@
         <module>es-7.16.2</module>
         <module>es-7.16.3</module>
         <module>es-7.17.5</module>
+        <module>es-7.17.6</module>
     </modules>
 
     <properties>
