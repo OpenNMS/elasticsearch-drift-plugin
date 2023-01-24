@@ -159,6 +159,8 @@ workflows:
             branches:
               only: master
       - deploy-maven:
+          context: 
+            - "OSSRH Principal"
           requires:
             - build
           filters:
