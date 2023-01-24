@@ -149,6 +149,8 @@ workflows:
               only: /.*/
       # deploy package snapshots for non-master branches only
       - deploy-packages:
+          context:
+            - "cloudsmith-publish-account"
           requires:
             - build
           filters:
