@@ -33,7 +33,7 @@
         <!-- in CI the revision is extracted from tags -->
         <revision>2.0.4-SNAPSHOT</revision>
 
-        <log4j.version>2.18.0</log4j.version>
+        <log4j.version>2.20.0</log4j.version>
 
         <!-- We use the build timestamp in the package revision, so change the format to ensure that there
              are no invalid characters such as colons (:) -->
