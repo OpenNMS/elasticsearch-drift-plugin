@@ -86,26 +86,18 @@ jobs:
       - attach_workspace:
           at: ~/
 
+      - sign-packages/install-deb-dependencies:
+          skip_if_forked_pr: true
+          use_sudo: true
+      - sign-packages/setup-env:
+          skip_if_forked_pr: true
+
       # Download cached dependencies
       - restore_cache:
           keys:
           - v2-dependencies-{{ checksum "pom.xml" }}
           # fallback to using the latest cache if no exact match is found
           - v2-dependencies-
-
-      - run:
-          name: Prepare GPG keystore file
-          command: |
-            export GPG_KEY_FILE=`mktemp`
-            echo "export GPG_KEY=$GPG_KEY_FILE" >> $BASH_ENV
-
-      - run:
-          name: Base64 decode GPG keystore to file
-          command: echo IGNING_PGP_BASE64 | base64 --decode > $GPG_KEY
-
-      - run:
-          name: Import GPG keys
-          command: gpg --batch --import $GPG_KEY
 
       - run:
           name: Deploy the artifacts
