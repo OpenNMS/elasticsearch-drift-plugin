@@ -11,7 +11,7 @@ Maintain modules for every supported patch version of Elasticsearch i.e.:
 
 Versioning uses Maven's revision mechanism (cf. https://maven.apache.org/maven-ci-friendly.html). Tag the release and push. The CI pipeline automatically derives the corresponding version from the tag name.
 
-After the plugin was released for a specific ES version the `revison` property in the parent pom needs **not** to be changed. There may come more ES versions for which the same plugin version will be released. Only if the functionality of the plugin is changed the `revision` property in the parent pom needs to be changed to the next snapshot version.
+After the plugin was released for a specific ES version the `revision` property in the parent pom needs **not** to be changed. There may come more ES versions for which the same plugin version will be released. Only if the functionality of the plugin is changed the `revision` property in the parent pom needs to be changed to the next snapshot version.
  
 Tag names must have the form:
 
