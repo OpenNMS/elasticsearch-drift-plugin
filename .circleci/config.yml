@@ -22,6 +22,12 @@ jobs:
     steps:
       - checkout
 
+      - sign-packages/install-deb-dependencies:
+          skip_if_forked_pr: true
+          use_sudo: true
+      - sign-packages/setup-env:
+          skip_if_forked_pr: true
+
       # Download and cache dependencies
       - restore_cache:
           keys:
@@ -95,7 +101,7 @@ jobs:
 
       - run:
           name: Base64 decode GPG keystore to file
-          command: echo $SIGNING_PGP_BASE64 | base64 --decode > $GPG_KEY
+          command: echo IGNING_PGP_BASE64 | base64 --decode > $GPG_KEY
 
       - run:
           name: Import GPG keys
@@ -105,6 +111,9 @@ jobs:
           name: Deploy the artifacts
           # deploy-maven is called only if CIRCLE_TAG is set
           command: |
+            mkdir -p ~/.m2
+            echo "${GPG_SECRET_KEY}" | base64 -d > ~/.m2/sign-key.asc
+            export SIGN_KEY_PASS="$(echo "${GPG_PASSPHRASE}" | base64 -d)"
             V=${CIRCLE_TAG%%_*}; mvn -s .circleci.settings.xml -Pgpg -DskipTests -Drevision=${V:1} package deploy --projects ${CIRCLE_TAG#*_}
 
   deploy-packages:
@@ -134,7 +143,7 @@ jobs:
 
 orbs:
   cloudsmith: cloudsmith/cloudsmith@1.0.3
-  sign-packages: opennms/sign-packages@2.2.0
+  sign-packages: opennms/sign-packages@2.3.0
 
 workflows:
   version: 2
@@ -142,6 +151,9 @@ workflows:
     jobs:
       # Run build jobs for all branches and any tag
       - build:
+          context:
+            - "CircleCI"
+            - "github-api"
           filters:
             tags:
               only: /.*/
