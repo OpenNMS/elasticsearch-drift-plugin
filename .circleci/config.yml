@@ -3,7 +3,7 @@ version: 2.1
 executors:
   build-executor:
     docker:
-      - image: cimg/openjdk:8.0
+      - image: cimg/openjdk:17.0.14
         environment:
           MAVEN_OPTS: -Xmx2g
   package-cloud-cli-executor:
