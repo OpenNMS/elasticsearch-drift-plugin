@@ -1,0 +1,13 @@
+{
+  "index_patterns": ["idx"],
+  "mappings": {
+    "mytype": {
+      "properties": {
+        "range": {
+          "type": "date_range",
+          "format": "epoch_millis"
+        }
+      }
+    }
+  }
+}
