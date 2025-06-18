@@ -230,7 +230,7 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
     }
 
     /** Get the current end in milliseconds that is set on this builder. */
-    public Long end() { return start; }
+    public Long end() { return end; }
 
     /** Set the end on this builder, which is a number of milliseconds, and
      *  return the builder so that calls can be chained. */
@@ -559,7 +559,7 @@ public class ProportionalSumAggregationBuilder extends MultiValuesSourceAggregat
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), order, keyed, minDocCount, interval, dateHistogramInterval, minDocCount, extendedBounds, start, end);
+        return Objects.hash(super.hashCode(), order, keyed, interval, dateHistogramInterval, minDocCount, extendedBounds, start, end);
     }
 
     @Override
