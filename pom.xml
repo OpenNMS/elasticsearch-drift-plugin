@@ -33,7 +33,7 @@
 
     <properties>
         <!-- in CI the revision is extracted from tags -->
-        <revision>2.0.5-SNAPSHOT</revision>
+        <revision>2.0.6-SNAPSHOT</revision>
 
         <log4j.version>2.20.0</log4j.version>
 
