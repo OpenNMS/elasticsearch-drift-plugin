@@ -343,7 +343,7 @@
                 <version>0.8.0</version> <!-- Check for latest version -->
                 <extensions>true</extensions>
                 <configuration>
-                    <serverId>ossrh</serverId>
+                    <serverId>central</serverId>
                     <autoPublish>true</autoPublish>
                 </configuration>
             </plugin>
@@ -420,7 +420,7 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>ossrh</id>
+            <id>central</id>
             <url>https://central.sonatype.com/repository/maven-snapshots</url>
         </snapshotRepository>
     </distributionManagement>
