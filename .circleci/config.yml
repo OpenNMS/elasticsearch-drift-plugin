@@ -123,15 +123,33 @@ jobs:
           command: .circleci/scripts/publish-cloudsmith.sh
 
   publish-github-release:
-    executor: github-executor
+    executor: build-executor
     working_directory: ~/project
     steps:
       - attach_workspace:
           at: ~/
       - run:
-          name: Publish release on GitHub
+          name: Install GitHub CLI and Publish release on GitHub
           command: |
-            ghr -t ${GITHUB_API_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ./target/artifacts/
+            if [ -z "${CIRCLE_TAG}" ]; then 
+              echo "Skipping step as we don't have a tag!"
+            else 
+              tag=${CIRCLE_TAG}
+
+              # Install GitHub CLI
+              type -p curl >/dev/null || sudo apt install curl -y
+              curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+              && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+              && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+              && sudo apt update \
+              && sudo apt install gh -y
+              
+              gh release create "$tag" \
+                --repo "${CIRCLE_PROJECT_REPONAME}" \
+                --title "$tag" \
+                --notes "$tag" \
+                ./target/artifacts/*
+            fi
 
 orbs:
   cloudsmith: cloudsmith/cloudsmith@1.0.3
@@ -176,7 +194,7 @@ workflows:
               ignore: /.*/
       - publish-github-release:
           context: 
-            - "github-api"
+            - "github-releases"
           requires:
             - build
           filters:
